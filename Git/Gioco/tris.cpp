@@ -10,6 +10,10 @@
 #include <ctime>
 using namespace std;
 int Tabellone[3][3];
+int Tabellone[3][3]={ {0,0,0},
+					  {0,0,0},
+					  {0,0,0}
+ };
 output(){
 		cout<<"ecco il tabellone : "<<endl;
 	cout<<"  ";
@@ -47,32 +51,46 @@ giocatore_1(){
 	cout<<endl<<"giocatore 1: "<<endl;
 	output();
 	bool pos=true;
+	bool pos_1=true;
 		int x,y;
 	do{
+		pos=true;
+		pos_1=true;
 	cout<<"inserisci la coordinata y : ";
 	cin>>y;
 	cout<<"inserisci la coordinata x : ";
 	cin>>x;
+	if((x<0||x>(2))||(y<0||y>(2))){
+		pos_1=false;
+	}
 	if(Tabellone[y][x]==2){
 		pos=false;
 	}
 	}while(((x<0||x>(2))||(y<0||y>(2)))&&pos==true);
+	}while(pos_1==false||pos==false);
 	Tabellone[y][x]=1;
 }
 giocatore_2(){
 	cout<<endl<<"giocatore 2: "<<endl;
 	output();
 		bool pos=true;
+		bool pos_1=true;
 		int x,y;
 	do{
+		pos_1=true;
+		pos=true;
 	cout<<"inserisci la coordinata y : ";
 	cin>>y;
 	cout<<"inserisci la coordinata x : ";
 	cin>>x;
+	if((x<0||x>(2))||(y<0||y>(2))){
+		pos_1=false;
+	}
 	if(Tabellone[y][x]==1){
 		pos=false;
 	}
 	}while(((x<0||x>(2))||(y<0||y>(2)))&&pos==true);
+	}while(pos_1==false||pos==false);
 	Tabellone[y][x]=2;
 }
 int continuare(){
@@ -166,6 +184,7 @@ int continuare(){
 int main() {
 	bool pos=true;
 	cout<<"il giocatore 1 sara la X il 2 la O";
+	cout<<"il giocatore 1 sara la X il 2 la O"<<endl;
 	srand(time(NULL));
 	int a=rand()%2+1;
 	if(a==1){
@@ -173,6 +192,7 @@ int main() {
 	giocatore_1();
 }else{
 	cout<<"comincia il giocatore 2";
+	cout<<"comincia il giocatore 2: ";
 	giocatore_2();
 }
 int b=continuare();
