@@ -16,3 +16,7 @@ s;c;o;d;e;l;l;a;
 b;a;n;c;o;m;a;t;
 f;i;n;e;s;t;r;a;
 c;u;s;t;o;d;i;a;
+s;t;u;d;i;a;r;e;
+b;a;t;t;e;r;i;e;
+m;o;d;a;l;i;t;a';
+p;a;r;a;d;i;s;o;

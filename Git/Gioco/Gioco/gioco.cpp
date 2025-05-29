@@ -7,8 +7,12 @@
 #include <windows.h>
 using namespace std;
 int main() {
+	system("caricamento.exe");
+	cout<<endl;
+	system("cls");
+	while(1==1){
 	int sceltassoluta;
-		cout<<"Cosa vuoi fare:"<<endl<<"indovina il pin = 1"<<endl<<"indovina la parola = 2"<<endl<<"Modalita' single player pin = 3"<<endl<<"Modalita' single player parola = 4"<<endl<<"Battaglia navale = 5"<<endl<<"Tris = 6"<<endl<<"Aggiungi una parola alla modalita' singol player = 7"<<endl<<"inserisci: ";
+		cout<<"Cosa vuoi fare:"<<endl<<"indovina il pin = 1"<<endl<<"indovina la parola = 2"<<endl<<"Modalita' single player pin = 3"<<endl<<"Modalita' single player parola = 4"<<endl<<"Battaglia navale = 5"<<endl<<"Tris = 6"<<endl<<"Aggiungi una parola alla modalita' single player = 7"<<endl<<"inserisci: ";
 		cin>>sceltassoluta;
 	switch (sceltassoluta){
 	case 1:
@@ -19,6 +23,7 @@ int main() {
 	break;
 	case 3: 
 		system("singolplayer.exe");	
+		break;
 	case 4:
 		system("singolplayerparola.exe");
 	break;
@@ -36,5 +41,7 @@ int main() {
 		system("pause");
 		return 0;
 	break;
+	}
+	system("cls");
 	}
 }

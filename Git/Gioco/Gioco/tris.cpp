@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include <ctime>
 using namespace std;
-int Tabellone[3][3];
 int Tabellone[3][3]={ {0,0,0},
 					  {0,0,0},
 					  {0,0,0}
@@ -66,7 +65,6 @@ giocatore_1(){
 	if(Tabellone[y][x]==2){
 		pos=false;
 	}
-	}while(((x<0||x>(2))||(y<0||y>(2)))&&pos==true);
 	}while(pos_1==false||pos==false);
 	Tabellone[y][x]=1;
 }
@@ -89,7 +87,6 @@ giocatore_2(){
 	if(Tabellone[y][x]==1){
 		pos=false;
 	}
-	}while(((x<0||x>(2))||(y<0||y>(2)))&&pos==true);
 	}while(pos_1==false||pos==false);
 	Tabellone[y][x]=2;
 }
@@ -183,7 +180,6 @@ int continuare(){
 }
 int main() {
 	bool pos=true;
-	cout<<"il giocatore 1 sara la X il 2 la O";
 	cout<<"il giocatore 1 sara la X il 2 la O"<<endl;
 	srand(time(NULL));
 	int a=rand()%2+1;
@@ -191,7 +187,6 @@ int main() {
 	cout<<"comincia il giocatore 1: ";
 	giocatore_1();
 }else{
-	cout<<"comincia il giocatore 2";
 	cout<<"comincia il giocatore 2: ";
 	giocatore_2();
 }
