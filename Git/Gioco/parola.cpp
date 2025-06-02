@@ -94,8 +94,43 @@ int main() {
 	}
 }else{ if(scelta1==1){
 		system("parola_test.exe");
+	}else if(scelta1==2){
+		do{
+		cout<<"Inserisci quanti tentativi voi fare: ";
+		cin>>tentativi;
+	}while(tentativi<1||tentativi>(numerolettere*2));
+		for(int contatentativi=1;contatentativi<=tentativi&&vinto==false;contatentativi++){
+				string lineg;
+		ifstream inputfile("parola.txt");
+		int cgiuste=0;
+		string parola=" ",line1=" ";
+		getline(inputfile,line1);
+		line1=" ";
+			cout<<"Inserisci la parola: ";
+			cin>>parola;
+			for(int i=0; i<numerolettere; i++) {
+			getline(inputfile,line1);
+			if(parola[i]==line1[0]) {
+				string posizione;
+				posizione=to_string(i );
+				string parola_1="-11";
+				parola_1=parola[i];
+				lineg+=parola_1+"$"+" "+posizione+" ; ";
+				cgiuste++;
+			}
+		}
+		inputfile.close();
+		if(cgiuste!=numerolettere) {
+			cout<<"*********************************"<<endl<<"ha indovinato "<<cgiuste<<"/"<<numerolettere<<" : "<<lineg<<" cifre"<<endl<<"le lettere con affianco il dollaro significa che sono nella posiszione giusta."<<endl;
+			system("pause");
+		} else {
+			cout<<"ha indovinato la parola"<<endl;
+			system("pause");
+			vinto=true;
+		}
 	}
-	return 0;
 }
+	}
 }
+return 0;
 }
