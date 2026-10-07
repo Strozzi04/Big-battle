@@ -12,7 +12,7 @@ int main() {
 	system("cls");
 	while(1==1){
 	int sceltassoluta;
-		cout<<"Cosa vuoi fare:"<<endl<<"indovina il pin = 1"<<endl<<"indovina la parola = 2"<<endl<<"Modalita' single player pin = 3"<<endl<<"Modalita' single player parola = 4"<<endl<<"Battaglia navale = 5"<<endl<<"Tris = 6"<<endl<<"Aggiungi una parola alla modalita' single player = 7"<<endl<<"Apri l'interfaccia grafica = 8"<<endl<<"Esci = 0"<<endl<<"inserisci: ";
+		cout<<"Cosa vuoi fare:"<<endl<<"indovina il pin = 1"<<endl<<"indovina la parola = 2"<<endl<<"Modalita' single player pin = 3"<<endl<<"Modalita' single player parola = 4"<<endl<<"Battaglia navale = 5"<<endl<<"Tris = 6"<<endl<<"Aggiungi una parola alla modalita' single player = 7"<<endl<<"Snake = 8"<<endl<<"Campo minato = 9"<<endl<<"Apri l'interfaccia grafica = 10"<<endl<<"Esci = 0"<<endl<<"inserisci: ";
 		if(!(cin>>sceltassoluta)){
 			if(cin.eof()){
 				return 0;
@@ -44,6 +44,12 @@ int main() {
 		system("sistema_di_aggiunta_parole.exe");
 	break;
 	case 8:
+		system("snake.exe");
+	break;
+	case 9:
+		system("campo_minato.exe");
+	break;
+	case 10:
 		system("start \"\" BigBattle.html");
 	break;
 	case 0:

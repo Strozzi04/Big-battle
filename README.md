@@ -4,8 +4,12 @@ Per scaricare il gioco basa cliccare sul pulsante code in verde e poi estrarre i
 
 ## Interfaccia grafica
 Nella cartella `Git/Gioco` c'e' il file `BigBattle.html`: basta aprirlo con un doppio clic (si apre nel browser, non serve installare niente).
-Contiene tutti i giochi del menu con la grafica: indovina il pin e la parola (2 giocatori o single player), battaglia navale (2 giocatori o contro il computer), tris (2 giocatori o contro il computer) e l'aggiunta di nuove parole.
-Si puo' aprire anche dal menu del gioco da console con l'opzione 8.
+Contiene tutti i giochi del menu con la grafica: indovina il pin e la parola (2 giocatori o single player), battaglia navale (2 giocatori o contro il computer), tris (2 giocatori o contro il computer), snake, campo minato e l'aggiunta di nuove parole.
+Si puo' aprire anche dal menu del gioco da console con l'opzione 10.
+
+## Snake e campo minato
+- **Snake** (`snake.cpp`, opzione 8): frecce o W A S D per muoverti, P per la pausa, Q per uscire. Il record viene salvato in `snake_record.txt`.
+- **Campo minato** (`campo_minato.cpp`, opzione 9): scegli se scoprire una casella o mettere/togliere una bandiera, poi inserisci le coordinate. La prima casella scoperta non e' mai una mina.
 
 ## Ricompilare i programmi
 I file `.cpp` dei giochi pin/parola usano `comune.h` (deve stare nella stessa cartella). Con MinGW:
