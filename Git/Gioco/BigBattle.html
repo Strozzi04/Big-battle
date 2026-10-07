@@ -122,6 +122,36 @@ input[type=text],input[type=password]{width:min(320px,100%);letter-spacing:2px}
 .sd-pad .btn{font-size:22px;font-weight:700;padding:10px 0}
 .sd-azioni{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .sd-azioni .btn{padding:8px 6px;font-size:14px}
+/* 2048 */
+.g48{position:relative;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:10px;padding:10px;width:min(420px,calc(100vw - 32px));aspect-ratio:1;background:var(--line);border-radius:12px;margin:12px 0;touch-action:none;user-select:none}
+.t48{border-radius:8px;background:color-mix(in srgb,var(--panel) 60%,var(--line));display:grid;place-items:center;font-weight:800;font-size:clamp(20px,7vw,38px);color:#fff}
+.t48.piccolo{font-size:clamp(15px,5vw,28px)}
+.t48.v2{background:#eee4da;color:#776e65}.t48.v4{background:#ede0c8;color:#776e65}.t48.v8{background:#f2b179}.t48.v16{background:#f59563}
+.t48.v32{background:#f67c5f}.t48.v64{background:#f65e3b}.t48.v128{background:#edcf72}.t48.v256{background:#edcc61}
+.t48.v512{background:#edc850}.t48.v1024{background:#edc53f}.t48.v2048{background:#edc22e}.t48.v4096{background:#3c3a32}
+.t48.nuova{animation:appari .18s ease-out}.t48.unita{animation:scoppia .18s ease-out}
+@keyframes appari{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes scoppia{50%{transform:scale(1.15)}}
+.g48-msg{position:absolute;inset:0;border-radius:12px;background:color-mix(in srgb,var(--panel) 80%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:20px}
+.g48-msg.vinto{background:color-mix(in srgb,#edc22e 70%,transparent)}
+/* solitario */
+.tavolo{--ch:calc(var(--cw)*1.4);user-select:none;-webkit-user-select:none}
+.tavolo .sopra,.tavolo .colonne{display:grid;grid-template-columns:repeat(7,var(--cw));gap:6px}
+.tavolo .colonne{margin-top:14px}
+.pila{position:relative;min-height:var(--ch)}
+.pila .pos{position:absolute;left:0}
+.carta{width:var(--cw);height:var(--ch);border-radius:calc(var(--cw)*.09);background:#fff;color:#1d2330;border:1px solid #b9b3a5;position:relative;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.18);touch-action:none}
+.carta.rossa{color:#c62f2f}
+.carta .ang{position:absolute;left:calc(var(--cw)*.07);top:calc(var(--cw)*.04);font-weight:800;font-size:calc(var(--cw)*.26);line-height:1;display:flex;flex-direction:column;align-items:center}
+.carta .ang i{font-style:normal;font-size:calc(var(--cw)*.22)}
+.carta .centro{position:absolute;right:calc(var(--cw)*.08);bottom:calc(var(--cw)*.06);font-size:calc(var(--cw)*.5);line-height:1}
+.carta.dorso{background:repeating-linear-gradient(45deg,#2f5bd3 0 6px,#264bb0 6px 12px);border-color:#1d3a8a;display:grid;place-items:center;color:#fff;font-size:12px;cursor:default}
+#mazzo .carta{cursor:pointer}
+.carta.vuota{background:transparent;border:2px dashed var(--line);box-shadow:none;display:grid;place-items:center;color:var(--muted);font-size:calc(var(--cw)*.35);cursor:default}
+#mazzo .carta.vuota{cursor:pointer}
+.pila.scarti{grid-column:span 1}
+.fantasma{position:fixed;z-index:20;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+.fantasma .pos{position:absolute;left:0}
 .words{columns:3 140px;font-size:14px;color:var(--muted)}
 </style>
 </head>
@@ -184,6 +214,8 @@ const VOCI=[
   ["snake","🐍","Snake","Mangia le mele e diventa lunghissimo"],
   ["campo","💣","Campo minato","Scopri tutte le caselle senza far esplodere le mine"],
   ["sudoku","🔢","Sudoku","Riempi la griglia con i numeri da 1 a 9"],
+  ["solitario","🃏","Solitario","Il classico solitario con le carte (Klondike)"],
+  ["g2048","🧮","2048","Unisci le tessere uguali fino ad arrivare a 2048"],
   ["aggiungi","➕","Aggiungi una parola","Amplia il dizionario della modalità single player"],
 ];
 let ferma=null; // funzione per fermare il gioco in corso (timer, tasti)
@@ -195,7 +227,7 @@ function vai(dove){
   $("#overlay").classList.add("hidden");
   ({menu:mostraMenu,pin2:()=>impostaIndovina("pin",2),parola2:()=>impostaIndovina("parola",2),
     pin1:()=>impostaIndovina("pin",1),parola1:()=>impostaIndovina("parola",1),
-    battaglia:impostaBattaglia,tris:impostaTris,snake:impostaSnake,campo:impostaCampoMinato,sudoku:impostaSudoku,aggiungi:mostraAggiungi})[dove]();
+    battaglia:impostaBattaglia,tris:impostaTris,snake:impostaSnake,campo:impostaCampoMinato,sudoku:impostaSudoku,solitario:impostaSolitario,g2048:imposta2048,aggiungi:mostraAggiungi})[dove]();
 }
 function mostraMenu(){
   app.innerHTML=`<h2>Cosa vuoi fare?</h2><p class="sub">Scegli un gioco</p><div class="menu">${
@@ -899,6 +931,220 @@ function disegnaSudoku(){
     if(sd.fine||!confirm("Vuoi vedere la soluzione? La partita finisce.")) return;
     sd.g=sd.sol.slice(); sd.arreso=true; sd.fine=Date.now(); clearInterval(sd.timer); disegnaSudoku();
   };
+}
+
+/* ------------------------------------------------------------------- 2048 */
+let g48=null;
+function record2048(){ try{ return +localStorage.getItem("bigbattle-2048-record")||0; }catch(e){ return 0; } }
+function imposta2048(){
+  g48={g:Array(16).fill(0),punti:0,record:record2048(),vinto:false,continua:false,fine:false,prima:null,nuova:-1,unite:[]};
+  tessera48(); tessera48(); g48.nuova=-1;
+  document.onkeydown=e=>{
+    const d={ArrowLeft:0,a:0,A:0,ArrowRight:1,d:1,D:1,ArrowUp:2,w:2,W:2,ArrowDown:3,s:3,S:3}[e.key];
+    if(d===undefined) return; e.preventDefault(); muovi48(d);
+  };
+  ferma=()=>{ document.onkeydown=null; };
+  disegna48();
+}
+function tessera48(){
+  const vuote=g48.g.map((v,i)=>v?-1:i).filter(i=>i>=0); if(!vuote.length) return;
+  const i=vuote[casuale(vuote.length)]; g48.g[i]=casuale(10)===0?4:2; g48.nuova=i;
+}
+// direzione: 0 = sinistra, 1 = destra, 2 = su, 3 = giu'
+function muovi48(dir){
+  if(g48.fine||(g48.vinto&&!g48.continua)) return;
+  const prima={g:g48.g.slice(),punti:g48.punti};
+  let cambiato=false; g48.unite=[];
+  for(let a=0;a<4;a++){
+    // indici della riga/colonna nell'ordine in cui le tessere "cadono"
+    const idx=[0,1,2,3].map(b=>dir===0?a*4+b:dir===1?a*4+3-b:dir===2?b*4+a:(3-b)*4+a);
+    const valori=idx.map(i=>g48.g[i]).filter(Boolean), nuova=[];
+    for(let k=0;k<valori.length;k++){
+      if(k+1<valori.length&&valori[k]===valori[k+1]){ nuova.push(valori[k]*2); g48.punti+=valori[k]*2; g48.unite.push(idx[nuova.length-1]); k++; }
+      else nuova.push(valori[k]);
+    }
+    idx.forEach((i,k)=>{ const v=nuova[k]||0; if(g48.g[i]!==v) cambiato=true; g48.g[i]=v; });
+  }
+  if(!cambiato){ g48.unite=[]; return; }
+  g48.prima=prima;
+  tessera48();
+  if(g48.punti>g48.record){ g48.record=g48.punti; try{localStorage.setItem("bigbattle-2048-record",g48.record);}catch(e){} }
+  if(!g48.vinto&&g48.g.some(v=>v>=2048)) g48.vinto=true;
+  g48.fine=!mossePossibili48();
+  disegna48();
+}
+function mossePossibili48(){
+  for(let i=0;i<16;i++){
+    if(!g48.g[i]) return true;
+    if(i%4<3&&g48.g[i]===g48.g[i+1]) return true;
+    if(i<12&&g48.g[i]===g48.g[i+4]) return true;
+  }
+  return false;
+}
+function disegna48(){
+  const msg=g48.fine?`<div class="g48-msg"><b>Game over!</b><span>Hai fatto ${g48.punti} punti</span><button class="btn primary" id="g48Nuova2">Riprova</button></div>`
+    :(g48.vinto&&!g48.continua)?`<div class="g48-msg vinto"><b>🏆 Hai fatto 2048!</b><button class="btn primary" id="g48Continua">Continua a giocare</button></div>`:"";
+  app.innerHTML=`<h2>2048</h2><p class="sub">Usa le frecce, W A S D o scorri col dito: le tessere uguali che si scontrano si uniscono. Arriva a 2048!</p>
+  <div class="score"><span>Punti: <b>${g48.punti}</b></span><span>Record: <b>${g48.record}</b></span></div>
+  <div class="g48" id="g48">${g48.g.map((v,i)=>`<div class="t48 ${v?"v"+Math.min(v,4096):""} ${i===g48.nuova?"nuova":""} ${g48.unite.includes(i)?"unita":""} ${v>=1024?"piccolo":""}">${v||""}</div>`).join("")}${msg}</div>
+  <div class="row"><button class="btn primary" id="g48Nuova">Nuova partita</button><button class="btn" id="g48Annulla" ${g48.prima?"":"disabled"}>↶ Annulla</button><button class="btn" onclick="vai('menu')">Menu</button></div>`;
+  $("#g48Nuova").onclick=()=>{ const r=g48.record; imposta2048(); g48.record=r; };
+  if($("#g48Nuova2")) $("#g48Nuova2").onclick=imposta2048;
+  if($("#g48Continua")) $("#g48Continua").onclick=()=>{ g48.continua=true; disegna48(); };
+  $("#g48Annulla").onclick=()=>{ if(!g48.prima) return; g48.g=g48.prima.g; g48.punti=g48.prima.punti; g48.prima=null; g48.fine=false; g48.nuova=-1; g48.unite=[]; disegna48(); };
+  let tocco=null; const b=$("#g48");
+  b.addEventListener("touchstart",e=>{ tocco=[e.touches[0].clientX,e.touches[0].clientY]; },{passive:true});
+  b.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
+  b.addEventListener("touchend",e=>{
+    if(!tocco) return; const dx=e.changedTouches[0].clientX-tocco[0], dy=e.changedTouches[0].clientY-tocco[1]; tocco=null;
+    if(Math.max(Math.abs(dx),Math.abs(dy))<25) return;
+    muovi48(Math.abs(dx)>Math.abs(dy)?(dx>0?1:0):(dy>0?3:2));
+  });
+}
+
+/* -------------------------------------------------------------- solitario */
+const SEMI=["♥","♦","♣","♠"], VALORI_C=["","A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+let sol=null;
+function impostaSolitario(){
+  app.innerHTML=`<h2>Solitario</h2><p class="sub">Porta tutte le carte nelle 4 fondazioni, dall'Asso al Re per ogni seme. Nelle colonne le carte vanno in ordine decrescente alternando rosso e nero; in una colonna vuota va solo un Re.</p>
+  <div class="panel"><label>Carte da pescare</label><select id="pesca"><option value="1">1 alla volta (facile)</option><option value="3">3 alla volta (difficile)</option></select>
+  <div class="row"><button class="btn primary" id="via">Gioca</button></div></div>`;
+  $("#via").onclick=()=>nuovoSolitario(+$("#pesca").value);
+}
+function nuovoSolitario(pesca){
+  const mazzo=mescola([...Array(52).keys()].map(k=>({v:k%13+1,s:Math.floor(k/13),su:false})));
+  const t=[];
+  for(let i=0;i<7;i++){ t.push(mazzo.splice(0,i+1)); t[i][i].su=true; }
+  sol={pesca,mazzo,scarti:[],t,f:[[],[],[],[]],mosse:0,storia:[],inizio:Date.now(),fine:null};
+  ferma=()=>{ clearInterval(sol&&sol.auto); window.onresize=null; };
+  window.onresize=()=>disegnaSol();
+  disegnaSol();
+}
+const rossa=c=>c.s<2;
+function salvaSol(){ sol.storia.push(JSON.stringify({mazzo:sol.mazzo,scarti:sol.scarti,t:sol.t,f:sol.f,mosse:sol.mosse})); if(sol.storia.length>200) sol.storia.shift(); }
+function annullaSol(){ const u=sol.storia.pop(); if(!u||sol.fine) return; Object.assign(sol,JSON.parse(u)); disegnaSol(); }
+function vaSuColonna(c,col){ if(!col.length) return c.v===13; const sotto=col[col.length-1]; return sotto.su&&rossa(sotto)!==rossa(c)&&sotto.v===c.v+1; }
+function vaInFondazione(c,i){ const f=sol.f[i]; return c.s===i&&f.length===c.v-1; }
+// prende le carte da spostare: pila ("t3", "w", "f1") e posizione della prima carta
+function carteDa(pila,k){
+  if(pila==="w") return sol.scarti.length?[sol.scarti[sol.scarti.length-1]]:[];
+  if(pila[0]==="f"){ const f=sol.f[+pila[1]]; return f.length?[f[f.length-1]]:[]; }
+  const col=sol.t[+pila[1]]; if(k<0||k>=col.length||!col[k].su) return [];
+  return col.slice(k);
+}
+function prova(pila,k,dest){
+  const carte=carteDa(pila,k); if(!carte.length||pila===dest) return false;
+  if(dest[0]==="f"){ if(carte.length!==1||!vaInFondazione(carte[0],+dest[1])) return false; }
+  else if(dest[0]==="t"){ if(!vaSuColonna(carte[0],sol.t[+dest[1]])) return false; }
+  else return false;
+  salvaSol();
+  if(pila==="w") sol.scarti.pop();
+  else if(pila[0]==="f") sol.f[+pila[1]].pop();
+  else { const col=sol.t[+pila[1]]; col.splice(k); if(col.length) col[col.length-1].su=true; }
+  (dest[0]==="f"?sol.f[+dest[1]]:sol.t[+dest[1]]).push(...carte);
+  sol.mosse++;
+  if(sol.f.every(f=>f.length===13)){ sol.fine=Date.now(); clearInterval(sol.auto); }
+  return true;
+}
+// clic su una carta: la manda nella posizione migliore (fondazione, poi colonne)
+function mossaAutomatica(pila,k){
+  const carte=carteDa(pila,k); if(!carte.length) return false;
+  if(carte.length===1&&pila[0]!=="f") for(let i=0;i<4;i++) if(prova(pila,k,"f"+i)) return true;
+  const ordine=[...Array(7).keys()].sort((a,b)=>(sol.t[a].length?0:1)-(sol.t[b].length?0:1));
+  for(const i of ordine){
+    if(pila==="t"+i) continue;
+    if(!sol.t[i].length&&pila[0]==="t"&&k===0) continue; // un Re gia' in fondo a una colonna non serve spostarlo
+    if(prova(pila,k,"t"+i)) return true;
+  }
+  return false;
+}
+function pescaSol(){
+  if(sol.fine) return;
+  salvaSol();
+  if(!sol.mazzo.length){
+    if(!sol.scarti.length){ sol.storia.pop(); return; }
+    sol.mazzo=sol.scarti.reverse().map(c=>({...c,su:false})); sol.scarti=[];
+  }else{
+    for(let n=0;n<sol.pesca&&sol.mazzo.length;n++){ const c=sol.mazzo.pop(); c.su=true; sol.scarti.push(c); }
+  }
+  sol.mosse++; disegnaSol();
+}
+function puoCompletare(){ return !sol.fine&&!sol.mazzo.length&&!sol.scarti.length&&sol.t.every(col=>col.every(c=>c.su)); }
+function completaSol(){
+  clearInterval(sol.auto);
+  sol.auto=setInterval(()=>{
+    let fatto=false;
+    for(let i=0;i<7&&!fatto;i++){ const col=sol.t[i]; if(col.length) for(let j=0;j<4&&!fatto;j++) fatto=prova("t"+i,col.length-1,"f"+j); }
+    if(!fatto) clearInterval(sol.auto);
+    disegnaSol();
+  },90);
+}
+function htmlCarta(c,attr){
+  if(!c.su) return `<div class="carta dorso" ${attr||""}></div>`;
+  const v=VALORI_C[c.v], s=SEMI[c.s];
+  return `<div class="carta ${rossa(c)?"rossa":""}" ${attr||""}><span class="ang">${v}<i>${s}</i></span><span class="centro">${s}</span></div>`;
+}
+function disegnaSol(){
+  const larg=Math.min(84,Math.floor((Math.min(app.clientWidth||innerWidth,900)-32-6*6)/7)); // 32 = margini di main
+  const tempo=Math.floor(((sol.fine||Date.now())-sol.inizio)/1000);
+  const scarti=sol.scarti.slice(-(sol.pesca===3?3:1));
+  const f=sol.f.map((p,i)=>`<div class="pila" data-pila="f${i}">${p.length?htmlCarta(p[p.length-1],`data-pila="f${i}" data-k="${p.length-1}"`):`<div class="carta vuota">${SEMI[i]}</div>`}</div>`).join("");
+  const colonne=sol.t.map((col,i)=>{
+    let top=0;
+    const carte=col.map((c,k)=>{ const h=`<div class="pos" style="top:${top}px">${htmlCarta(c,`data-pila="t${i}" data-k="${k}"`)}</div>`; top+=c.su?Math.round(larg*.52):Math.round(larg*.18); return h; }).join("");
+    return `<div class="pila col" data-pila="t${i}" style="height:${top+larg*1.45}px">${col.length?"":`<div class="carta vuota">K</div>`}${carte}</div>`;
+  }).join("");
+  app.innerHTML=`<h2>Solitario</h2>
+  <div class="score"><span>Mosse: <b>${sol.mosse}</b></span><span>Fondazioni: <b>${sol.f.reduce((a,p)=>a+p.length,0)}</b>/52</span><span>Pesca: <b>${sol.pesca}</b></span></div>
+  ${sol.fine?`<div class="msg ok">🏆 Hai vinto in ${sol.mosse} mosse e ${Math.floor(tempo/60)}:${String(tempo%60).padStart(2,"0")}!</div>`:""}
+  <div class="tavolo" style="--cw:${larg}px">
+    <div class="sopra">
+      <div class="pila" id="mazzo" title="Pesca">${sol.mazzo.length?`<div class="carta dorso"><b>${sol.mazzo.length}</b></div>`:`<div class="carta vuota">↻</div>`}</div>
+      <div class="pila scarti">${scarti.map((c,k)=>`<div class="pos" style="left:${k*Math.round(larg*.3)}px">${htmlCarta(c,k===scarti.length-1?'data-pila="w" data-k="0"':"")}</div>`).join("")||'<div class="carta vuota"></div>'}</div>
+      <div class="spazio"></div>${f}
+    </div>
+    <div class="colonne">${colonne}</div>
+  </div>
+  <p class="sub" style="font-size:14px;margin-top:10px">Clicca una carta per spostarla automaticamente, oppure trascinala dove vuoi. Clicca il mazzo per pescare.</p>
+  <div class="row"><button class="btn" id="solAnnulla" ${sol.storia.length&&!sol.fine?"":"disabled"}>↶ Annulla</button>
+    ${puoCompletare()?'<button class="btn primary" id="solCompleta">✨ Completa</button>':""}
+    <button class="btn ${sol.fine?"primary":""}" id="solNuova">Nuova partita</button><button class="btn" onclick="impostaSolitario()">Cambia modalità</button></div>`;
+  $("#mazzo").onclick=pescaSol;
+  $("#solAnnulla").onclick=annullaSol;
+  $("#solNuova").onclick=()=>{ clearInterval(sol.auto); nuovoSolitario(sol.pesca); };
+  if($("#solCompleta")) $("#solCompleta").onclick=completaSol;
+  app.querySelectorAll(".carta[data-pila]").forEach(el=>el.onpointerdown=e=>iniziaTrascina(e,el));
+}
+function iniziaTrascina(e,el){
+  if(sol.fine||e.button>0) return;
+  const pila=el.dataset.pila, k=+el.dataset.k;
+  if(!carteDa(pila,k).length) return;
+  e.preventDefault();
+  const x0=e.clientX, y0=e.clientY;
+  // le carte da trascinare: quella toccata e quelle sopra nella stessa colonna
+  const els=pila[0]==="t"?[...app.querySelectorAll(`.carta[data-pila="${pila}"]`)].filter(c=>+c.dataset.k>=k):[el];
+  let fantasma=null;
+  const muovi=ev=>{
+    const dx=ev.clientX-x0, dy=ev.clientY-y0;
+    if(!fantasma&&Math.hypot(dx,dy)<6) return;
+    if(!fantasma){
+      const r=el.getBoundingClientRect();
+      fantasma=document.createElement("div"); fantasma.className="fantasma tavolo"; fantasma.style.setProperty("--cw",r.width+"px");
+      els.forEach((c,n)=>{ const p=document.createElement("div"); p.className="pos"; p.style.top=(c.getBoundingClientRect().top-r.top)+"px"; p.appendChild(c.cloneNode(true)); fantasma.appendChild(p); c.style.visibility="hidden"; });
+      fantasma.style.left=r.left+"px"; fantasma.style.top=r.top+"px"; fantasma.dataset.x=r.left; fantasma.dataset.y=r.top;
+      document.body.appendChild(fantasma);
+    }
+    fantasma.style.transform=`translate(${dx}px,${dy}px)`;
+  };
+  const fine=ev=>{
+    document.removeEventListener("pointermove",muovi); document.removeEventListener("pointerup",fine); document.removeEventListener("pointercancel",fine);
+    if(!fantasma){ mossaAutomatica(pila,k); return disegnaSol(); }
+    fantasma.remove();
+    const sotto=document.elementFromPoint(ev.clientX,ev.clientY), dest=sotto&&sotto.closest("[data-pila]");
+    if(dest) prova(pila,k,dest.dataset.pila);
+    disegnaSol();
+  };
+  document.addEventListener("pointermove",muovi); document.addEventListener("pointerup",fine); document.addEventListener("pointercancel",fine);
 }
 
 mostraMenu();
