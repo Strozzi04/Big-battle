@@ -12,7 +12,7 @@ int main() {
 	system("cls");
 	while(1==1){
 	int sceltassoluta;
-		cout<<"Cosa vuoi fare:"<<endl<<"indovina il pin = 1"<<endl<<"indovina la parola = 2"<<endl<<"Modalita' single player pin = 3"<<endl<<"Modalita' single player parola = 4"<<endl<<"Battaglia navale = 5"<<endl<<"Tris = 6"<<endl<<"Aggiungi una parola alla modalita' single player = 7"<<endl<<"Snake = 8"<<endl<<"Campo minato = 9"<<endl<<"Apri l'interfaccia grafica = 10"<<endl<<"Esci = 0"<<endl<<"inserisci: ";
+		cout<<"Cosa vuoi fare:"<<endl<<"indovina il pin = 1"<<endl<<"indovina la parola = 2"<<endl<<"Modalita' single player pin = 3"<<endl<<"Modalita' single player parola = 4"<<endl<<"Battaglia navale = 5"<<endl<<"Tris = 6"<<endl<<"Aggiungi una parola alla modalita' single player = 7"<<endl<<"Snake = 8"<<endl<<"Campo minato = 9"<<endl<<"Sudoku = 10"<<endl<<"Solitario = 11"<<endl<<"2048 = 12"<<endl<<"Apri l'interfaccia grafica = 13"<<endl<<"Esci = 0"<<endl<<"inserisci: ";
 		if(!(cin>>sceltassoluta)){
 			if(cin.eof()){
 				return 0;
@@ -50,6 +50,15 @@ int main() {
 		system("campo_minato.exe");
 	break;
 	case 10:
+		system("sudoku.exe");
+	break;
+	case 11:
+		system("solitario.exe");
+	break;
+	case 12:
+		system("2048.exe");
+	break;
+	case 13:
 		system("start \"\" BigBattle.html");
 	break;
 	case 0:
