@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <stdlib.h>
-#include <cstdlib>
+#include <limits>
 //srand(unsigned(time(NULL))); 
 //n1 = rand()%10;
 //SetConsoleTextAttribute(h, 14);
@@ -25,7 +25,9 @@ const int N=10;
 		ifstream intputfile("tab_att_2.txt");
 		for(int i=0;i<N;i++){
 			for(int j=0;j<N;j++){
-				getline(intputfile,barca);
+				if(!getline(intputfile,barca)||barca==""){
+					barca="0";
+				}
 				Tabellone_2_attacco[i][j]=barca;
 			}
 		}
@@ -34,7 +36,9 @@ const int N=10;
 		ifstream intputfile("tab_att_1.txt");
 		for(int i=0;i<N;i++){
 			for(int j=0;j<N;j++){
-				getline(intputfile,barca);
+				if(!getline(intputfile,barca)||barca==""){
+					barca="0";
+				}
 				Tabellone_1_attacco[i][j]=barca;
 			}
 		}
@@ -180,113 +184,96 @@ cout<<endl;
 }
 }
 }
-	void giocatore_1(){
-		int scelta;
-		int x,y;
-			cout<<endl<<"Giocatore 1: "<<endl;
-		do{
-			cout<<"vuoi attaccare = 1"<<endl<<"vuoi vedere il tabellone = 2"<<endl<<"inserisci: ";
-			cin>>scelta;
-		}while(!(scelta==1||scelta==2));
-		if(scelta==1){
-		Output_1();
-		do{
-		cout<<"inserisci la coordinata y:";
-		cin>>y;
-		cout<<"inserisci la coordinata x:";
-		cin>>x;
-		}while((x<0||x>(N-1))||(y<0||y>(N-1)));
-		if(Tabellone_2[y][x]=="1"){
-			Tabellone_1_attacco[y][x]="2";
-			Tabellone_2[y][x]="2";
-			cout<<"colpito"<<endl;
-			string pin;
-			ifstream intputfile("tabellone_2.txt");
-			getline(intputfile,pin);
-			intputfile.close();
-			ofstream outputfile("tabellone_2.txt",ios::trunc);
-			outputfile<<pin<<endl;
-			for(int i=0;i<N;i++){
-    for(int j=0;j<N;j++){
-        outputfile<<Tabellone_2[i][j]<<endl;
-    }
-}
-    outputfile.close();
-		}else{
-			cout<<"colpo nullo"<<endl;
-			Tabellone_1_attacco[y][x]="3";
+	// legge un numero intero senza andare in loop se l'utente scrive una lettera
+	int leggi_intero(string messaggio){
+		int n;
+		while(true){
+			cout<<messaggio;
+			if(cin>>n){
+				return n;
+			}
+			if(cin.eof()){
+				exit(0);
+			}
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(),'\n');
+			cout<<"devi inserire un numero"<<endl;
 		}
-		}else{
-			system("tabellone.exe");
-			system("pause");
-			system("cls");
-		}
-		ofstream outputfile("tab_att_2.txt",ios::trunc);
-		for(int i=0;i<N;i++){
-		for(int j=0;j<N;j++){
-        outputfile<<Tabellone_2_attacco[i][j]<<endl;
-    }
-}
-		 outputfile.close();
 	}
-	
-	void giocatore_2(){
+	// salva il tabellone delle barche del giocatore (mantenendo il pin)
+	void salva_tabellone(string nome_file,string Tabellone[N][N]){
+		string pin;
+		ifstream intputfile(nome_file.c_str());
+		getline(intputfile,pin);
+		intputfile.close();
+		ofstream outputfile(nome_file.c_str(),ios::trunc);
+		outputfile<<pin<<endl;
+		for(int i=0;i<N;i++){
+			for(int j=0;j<N;j++){
+				outputfile<<Tabellone[i][j]<<endl;
+			}
+		}
+		outputfile.close();
+	}
+	void salva_attacchi(string nome_file,string Tabellone[N][N]){
+		ofstream outputfile(nome_file.c_str(),ios::trunc);
+		for(int i=0;i<N;i++){
+			for(int j=0;j<N;j++){
+				outputfile<<Tabellone[i][j]<<endl;
+			}
+		}
+		outputfile.close();
+	}
+	// turno del giocatore g (1 o 2): attacca le barche dell'avversario
+	void turno(int g){
+		string (*attacco)[N]=(g==1)?Tabellone_1_attacco:Tabellone_2_attacco;
+		string (*avversario)[N]=(g==1)?Tabellone_2:Tabellone_1;
 		int scelta;
 		int x,y;
-		cout<<endl<<"Giocatore 2: "<<endl;
+		cout<<endl<<"Giocatore "<<g<<": "<<endl;
 		do{
-			cout<<"vuoi attaccare = 1"<<endl<<"vuoi vedere il tabellone = 2"<<endl<<"inserisci: ";
-			cin>>scelta;
-		}while(!(scelta==1||scelta==2));
-		if(scelta==1){
-		Output_2();
-		do{
-		cout<<"inserisci la coordinata y:";
-		cin>>y;
-		cout<<"inserisci la coordinata x: ";
-		cin>>x;
-		}while((x<0||x>(N-1))||(y<0||y>(N-1)));
-		if(Tabellone_1[y][x]=="1"){
-			Tabellone_1[y][x]="2";
-			Tabellone_2_attacco[y][x]="2";
+			scelta=leggi_intero("vuoi attaccare = 1\nvuoi vedere il tabellone = 2\ninserisci: ");
+			if(scelta==2){
+				//si puo' vedere il proprio tabellone e poi attaccare
+				system(g==1?"tabellone.exe":"tabellone2.exe");
+				system("pause");
+				system("cls");
+				cout<<endl<<"Giocatore "<<g<<": "<<endl;
+			}
+		}while(scelta!=1);
+		if(g==1){
+			Output_1();
+		}else{
+			Output_2();
+		}
+		while(true){
+			y=leggi_intero("inserisci la coordinata y: ");
+			x=leggi_intero("inserisci la coordinata x: ");
+			if(x<0||x>(N-1)||y<0||y>(N-1)){
+				cout<<"coordinate non valide, devono essere tra 0 e "<<N-1<<endl;
+			}else if(attacco[y][x]!="0"){
+				cout<<"hai gia' attaccato questa casella, scegline un'altra"<<endl;
+			}else{
+				break;
+			}
+		}
+		if(avversario[y][x]=="1"){
+			attacco[y][x]="2";
+			avversario[y][x]="2";
 			cout<<"colpito"<<endl;
-			string pin;
-			ifstream intputfile("tabellone_1.txt");
-			getline(intputfile,pin);
-			intputfile.close();
-			ofstream outputfile("tabellone_1.txt",ios::trunc);
-			outputfile<<pin<<endl;
-			for(int i=0;i<N;i++){
-    for(int j=0;j<N;j++){
-        outputfile<<Tabellone_1[i][j]<<endl;
-    }
-}
-    outputfile.close();
+			salva_tabellone(g==1?"tabellone_2.txt":"tabellone_1.txt",avversario);
 		}else{
 			cout<<"colpo nullo"<<endl;
-				Tabellone_2_attacco[y][x]="3";
+			attacco[y][x]="3";
 		}
-		}else{
-			system("tabellone2.exe");
-			system("pause");
-			system("cls");
-		}
-		ofstream outputfile("tab_att_2.txt",ios::trunc);
-		for(int i=0;i<N;i++){
-		for(int j=0;j<N;j++){
-        outputfile<<Tabellone_2_attacco[i][j]<<endl;
-    }
-}
-		 outputfile.close();
-		
+		salva_attacchi(g==1?"tab_att_1.txt":"tab_att_2.txt",attacco);
 	}
 int main() {
 	int pos_barche;
 	string pin;
 	do{
-	cout<<"hai gia posizionato le barche? si = 1, no = 0"<<endl<<"inserisci: ";
-	cin>>pos_barche;
-}while(!(pos_barche==1||pos_barche==0));
+		pos_barche=leggi_intero("hai gia posizionato le barche? si = 1, no = 0\ninserisci: ");
+	}while(!(pos_barche==1||pos_barche==0));
 	if(pos_barche==0){
 	PosizionaBarche();
 	system("pause");
@@ -318,8 +305,7 @@ int main() {
    }
    int a;
    do{
-   cout<<"Avete gia comiciato ? si = 1 no = 0: ";
-   cin>>a;
+   a=leggi_intero("Avete gia comiciato ? si = 1 no = 0: ");
 }while(!(a==1||a==0));
    if(a==0){
    	riempi();
@@ -327,14 +313,27 @@ int main() {
    	riempi_1();
    }
    int continua=continuare();
+   int vincitore=0;
 	while(continua==1){
-	giocatore_1();
-	giocatore_2();
+	turno(1);
 	continua=continuare();
+	if(continua!=1){
+		vincitore=1;
+		break;
 	}
-	cout<<endl<<"PARTITA FINITA : "<<endl<<"Tabellone giocatore 1: "<<endl;
+	turno(2);
+	continua=continuare();
+	if(continua!=1){
+		vincitore=2;
+	}
+	}
+	cout<<endl<<"PARTITA FINITA";
+	if(vincitore!=0){
+		cout<<" : HA VINTO IL GIOCATORE "<<vincitore;
+	}
+	cout<<endl<<"Tabellone attacchi giocatore 1: "<<endl;
 	Output_1();
-	cout<<endl<<"Tabellone giocatore 2: "<<endl;
+	cout<<endl<<"Tabellone attacchi giocatore 2: "<<endl;
 	Output_2();
 	system("pause");
 	return 0;

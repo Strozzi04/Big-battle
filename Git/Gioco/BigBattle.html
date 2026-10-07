@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Big Battle</title>
+<style>
+:root{
+  --bg:#f4f1ea; --panel:#ffffff; --ink:#1d2330; --muted:#6b7280; --line:#d9d4c7;
+  --accent:#2f5bd3; --accent-ink:#ffffff; --green:#3a9a5b; --yellow:#d4a72c; --gray:#9aa0a8;
+  --sea:#d7e6f5; --ship:#3c4a63; --hit:#d64545; --miss:#8aa4c0; --shadow:0 2px 10px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14171e; --panel:#1e232d; --ink:#e7e9ee; --muted:#9aa3b2; --line:#323946;
+    --accent:#6b8cff; --accent-ink:#0f1320; --green:#3fa866; --yellow:#c99a1e; --gray:#4a515e;
+    --sea:#1c3048; --ship:#a9b6cc; --hit:#e25b5b; --miss:#3d5874; --shadow:0 2px 10px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14171e; --panel:#1e232d; --ink:#e7e9ee; --muted:#9aa3b2; --line:#323946;
+  --accent:#6b8cff; --accent-ink:#0f1320; --green:#3fa866; --yellow:#c99a1e; --gray:#4a515e;
+  --sea:#1c3048; --ship:#a9b6cc; --hit:#e25b5b; --miss:#3d5874; --shadow:0 2px 10px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:20px;margin:0;letter-spacing:.5px}
+header .spacer{flex:1}
+main{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+h2{margin:0 0 6px;font-size:22px}
+p.sub{margin:0 0 18px;color:var(--muted)}
+button,select,input{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+input[type=text],input[type=password],input[type=number],select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+input[type=text],input[type=password]{width:min(320px,100%);letter-spacing:2px}
+.menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;text-align:left;box-shadow:var(--shadow);transition:transform .1s,border-color .1s}
+.card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.card .ico{font-size:30px}
+.card b{display:block;margin:6px 0 2px;font-size:17px}
+.card span{color:var(--muted);font-size:14px}
+.msg{padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line);margin:10px 0}
+.msg.ok{border-color:var(--green)} .msg.err{border-color:var(--hit)}
+.hidden{display:none !important}
+/* indovina */
+.tiles{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0}
+.tile{width:40px;height:44px;display:grid;place-items:center;border-radius:7px;font-weight:700;font-size:20px;text-transform:uppercase;border:2px solid var(--line);background:var(--panel)}
+.tile.g{background:var(--green);border-color:var(--green);color:#fff}
+.tile.y{background:var(--yellow);border-color:var(--yellow);color:#fff}
+.tile.x{background:var(--gray);border-color:var(--gray);color:#fff}
+.attempt{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.attempt .info{color:var(--muted);font-size:14px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+/* tris */
+.tris{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(330px,100%);aspect-ratio:1;margin:10px 0}
+.tris button{border:1px solid var(--line);background:var(--panel);border-radius:12px;font-size:48px;font-weight:700;cursor:pointer;color:var(--ink)}
+.tris button.X{color:var(--accent)} .tris button.O{color:var(--hit)}
+.tris button.win{background:var(--green);color:#fff}
+.score{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted)}
+.score b{color:var(--ink)}
+/* battaglia */
+.boards{display:flex;gap:22px;flex-wrap:wrap}
+.board-wrap h3{margin:0 0 6px;font-size:15px}
+.grid{display:grid;grid-template-columns:22px repeat(10,1fr);gap:2px;width:min(380px,calc(100vw - 32px))}
+.grid.small{width:min(260px,calc(100vw - 32px))}
+.grid .lab{font-size:11px;color:var(--muted);display:grid;place-items:center}
+.grid .c{aspect-ratio:1;background:var(--sea);border-radius:3px;border:0;padding:0;cursor:pointer;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.grid .c.ship{background:var(--ship)}
+.grid .c.hit{background:var(--hit)}
+.grid .c.miss{background:var(--miss)}
+.grid .c.prev{outline:2px solid var(--green);outline-offset:-2px}
+.grid .c.bad{outline:2px solid var(--hit);outline-offset:-2px}
+.grid.off .c{cursor:default}
+.fleet{display:flex;gap:8px;flex-wrap:wrap}
+.fleet .btn.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.overlay{position:fixed;inset:0;background:rgba(10,12,18,.92);display:grid;place-items:center;z-index:10;padding:16px}
+.overlay .panel{max-width:420px;text-align:center}
+.words{columns:3 140px;font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚔️ Big Battle</h1>
+  <div class="spacer"></div>
+  <button class="btn" id="homeBtn" onclick="vai('menu')">☰ Menu</button>
+  <button class="btn" id="themeBtn" title="Tema chiaro/scuro" onclick="cambiaTema()">🌓</button>
+</header>
+<main id="app"></main>
+<div id="overlay" class="overlay hidden"><div class="panel"><h2 id="ovTitle"></h2><p id="ovText"></p><button class="btn primary" id="ovBtn">Pronto</button></div></div>
+
+<script>
+"use strict";
+/* ------------------------------------------------------------------ dati */
+// Parole prese dai file parola_N.txt (una parola per riga, lettere separate da ';')
+const PAROLE_BASE={"4":["arco","acne","alte","alta","alti","alto","cane","mano","zona","auto","bene","male","foto","foca","muro","film","vaso","dove","otto","lupo","lega"],"5":["guida","fiore","stalo","libro","penna","bagno","somme","disco","villa","meteo","terra","spina","sarto","morte","scudo","zaino","ponte","tutto","gioco","anima","brava","bravo","sette","pieno"],"6":["parola","foglio","doccia","adesso","valore","figlio","retina","errore","motori","giorno","cinque","quante","quanto"],"7":["fuggiva","peluche","lampada","sistema","nutella","mensola","cuscino","piumone","schermo","uccello","capelli","monitor","pioggia","perdono"],"8":["pilastro","quaderno","tastiera","astuccio","computer","internet","macchina","lenzuolo","cartella","cappello","esercito","montagna","cadaveri","vendetta","scodella","bancomat","finestra","custodia","studiare","batterie","modalita","paradiso"],"9":["confronto","discoteca","selvaggio","tartaruga","giocatore","artmetica","traditore","sarcofago","contadino","formaggio"],"10":["fabbisogni","fazzoletto","pimsatrice","conoscenza","ricompensa","sofferenza","matematica"],"11":["pozzanghera","volatizzate"],"12":["fabbricabile","cioccolatino"],"13":["magazzinaggio"],"14":["falsificazione"],"15":["faciliterebbero","moltiplicazione"]};
+const CHIAVE_PAROLE="bigbattle-parole-aggiunte";
+
+function paroleAggiunte(){
+  try{ return JSON.parse(localStorage.getItem(CHIAVE_PAROLE))||[]; }catch(e){ return []; }
+}
+function salvaParoleAggiunte(l){
+  try{ localStorage.setItem(CHIAVE_PAROLE,JSON.stringify(l)); return true; }catch(e){ return false; }
+}
+function tutteLeParole(n){
+  const base=PAROLE_BASE[n]||[];
+  return base.concat(paroleAggiunte().filter(p=>p.length===n&&!base.includes(p)));
+}
+
+/* --------------------------------------------------------------- utilita' */
+const $=s=>document.querySelector(s);
+const app=$("#app");
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function casuale(n){return Math.floor(Math.random()*n);}
+function cambiaTema(){
+  const r=document.documentElement;
+  const scuro=r.dataset.theme? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme=scuro?"light":"dark";
+  try{localStorage.setItem("bigbattle-tema",r.dataset.theme);}catch(e){}
+}
+try{const t=localStorage.getItem("bigbattle-tema"); if(t) document.documentElement.dataset.theme=t;}catch(e){}
+
+function overlay(titolo,testo,bottone,poi){
+  $("#ovTitle").textContent=titolo; $("#ovText").textContent=testo; $("#ovBtn").textContent=bottone||"Pronto";
+  $("#overlay").classList.remove("hidden");
+  $("#ovBtn").onclick=()=>{ $("#overlay").classList.add("hidden"); if(poi) poi(); };
+  $("#ovBtn").focus();
+}
+
+/* ------------------------------------------------------------------- menu */
+const VOCI=[
+  ["pin2","🔢","Indovina il pin","Un giocatore decide il pin, l'altro lo indovina"],
+  ["parola2","🔤","Indovina la parola","Un giocatore decide la parola, l'altro la indovina"],
+  ["pin1","🎲","Single player pin","Il pin viene generato a caso"],
+  ["parola1","📖","Single player parola","La parola viene scelta dal dizionario"],
+  ["battaglia","🚢","Battaglia navale","2 giocatori sullo stesso computer o contro il computer"],
+  ["tris","❌","Tris","2 giocatori o contro il computer"],
+  ["aggiungi","➕","Aggiungi una parola","Amplia il dizionario della modalità single player"],
+];
+function vai(dove){
+  window.scrollTo(0,0);
+  $("#overlay").classList.add("hidden");
+  ({menu:mostraMenu,pin2:()=>impostaIndovina("pin",2),parola2:()=>impostaIndovina("parola",2),
+    pin1:()=>impostaIndovina("pin",1),parola1:()=>impostaIndovina("parola",1),
+    battaglia:impostaBattaglia,tris:impostaTris,aggiungi:mostraAggiungi})[dove]();
+}
+function mostraMenu(){
+  app.innerHTML=`<h2>Cosa vuoi fare?</h2><p class="sub">Scegli un gioco</p><div class="menu">${
+    VOCI.map(v=>`<button class="card" onclick="vai('${v[0]}')"><div class="ico">${v[1]}</div><b>${v[2]}</b><span>${v[3]}</span></button>`).join("")
+  }</div>`;
+}
+
+/* ------------------------------------------------- indovina pin / parola */
+const DIFFICOLTA={
+  1:["Facile","Saprai tutto: in verde i caratteri nella posizione corretta, in giallo quelli presenti ma nella posizione sbagliata."],
+  2:["Media","Saprai quali caratteri hai indovinato solo se sono nella posizione giusta."],
+  3:["Difficile","Saprai soltanto quanti caratteri hai indovinato nella posizione corretta."],
+};
+function testiGioco(tipo){
+  return tipo==="pin"
+    ? {nome:"pin",art:"il",unita:"cifre",un:"un",o:"o",regex:/^[0-9]+$/,soloMsg:"Il pin può contenere solo cifre."}
+    : {nome:"parola",art:"la",unita:"lettere",un:"una",o:"a",regex:/^[a-z]+$/,soloMsg:"La parola può contenere solo lettere (senza accenti)."};
+}
+function impostaIndovina(tipo,giocatori){
+  const t=testiGioco(tipo);
+  const titolo=giocatori===2?`Indovina ${t.art} ${t.nome}`:`Single player ${t.nome}`;
+  let campo;
+  if(giocatori===2){
+    campo=`<label>Giocatore 1: scrivi ${t.art} ${t.nome} segret${t.o} (l'altro giocatore non deve guardare)</label>
+      <input type="password" id="segreto" autocomplete="off" ${tipo==="pin"?'inputmode="numeric"':''}>`;
+  }else if(tipo==="pin"){
+    campo=`<label>Da quante cifre deve essere il pin?</label><input type="number" id="lung" min="3" max="12" value="4">`;
+  }else{
+    const opz=[];
+    for(let n=4;n<=15;n++){ const k=tutteLeParole(n).length; opz.push(`<option value="${n}" ${k?"":"disabled"} ${n===5?"selected":""}>${n} lettere (${k} parole)</option>`); }
+    campo=`<label>Numero di lettere</label><select id="lung">${opz.join("")}</select>`;
+  }
+  app.innerHTML=`<h2>${titolo}</h2><p class="sub">Imposta la partita</p>
+  <div class="panel">
+    ${campo}
+    <div class="row" style="margin-top:16px">
+      <div><label>Difficoltà</label><select id="diff">${Object.entries(DIFFICOLTA).map(([k,v])=>`<option value="${k}">${v[0]}</option>`).join("")}</select></div>
+      <div><label>Tentativi</label><input type="number" id="tent" min="1" value="6" style="width:90px"></div>
+    </div>
+    <p class="sub" id="diffInfo"></p>
+    <div id="err"></div>
+    <button class="btn primary" id="inizia">Inizia</button>
+  </div>`;
+  const aggiornaInfo=()=>{
+    const d=+$("#diff").value; let s=DIFFICOLTA[d][1].replace("caratteri",t.unita);
+    if(d===2) s+=` Massimo tentativi: 2 × numero di ${t.unita}.`;
+    if(d===3) s+=` Massimo tentativi: numero di ${t.unita}.`;
+    $("#diffInfo").textContent=s;
+  };
+  $("#diff").onchange=aggiornaInfo; aggiornaInfo();
+  const errore=m=>{$("#err").innerHTML=`<div class="msg err">${esc(m)}</div>`;};
+  $("#inizia").onclick=()=>{
+    let segreto;
+    if(giocatori===2){
+      segreto=$("#segreto").value.trim().toLowerCase();
+      if(segreto.length<2) return errore(`${t.art[0].toUpperCase()+t.art.slice(1)} ${t.nome} deve avere almeno 2 ${t.unita}.`);
+      if(segreto.length>15) return errore(`Massimo 15 ${t.unita}.`);
+      if(!t.regex.test(segreto)) return errore(t.soloMsg);
+    }else if(tipo==="pin"){
+      const n=+$("#lung").value;
+      if(!(n>=3&&n<=12)) return errore("Il pin deve essere da 3 a 12 cifre.");
+      segreto=Array.from({length:n},()=>casuale(10)).join("");
+    }else{
+      const l=tutteLeParole(+$("#lung").value);
+      if(!l.length) return errore("Non ci sono parole di questa lunghezza: aggiungile dal menu.");
+      segreto=l[casuale(l.length)];
+    }
+    const d=+$("#diff").value, n=segreto.length, tent=Math.floor(+$("#tent").value);
+    const max=d===2?n*2:d===3?n:Infinity;
+    if(!(tent>=1)) return errore("Devi fare almeno un tentativo.");
+    if(tent>max) return errore(`In difficoltà ${DIFFICOLTA[d][0].toLowerCase()} puoi fare al massimo ${max} tentativi (${t.art} ${t.nome} è da ${n} ${t.unita}).`);
+    giocaIndovina({tipo,giocatori,segreto,diff:d,tentativi:tent,fatti:[],finito:false});
+  };
+}
+// stato per ogni carattere: 2 = posizione corretta, 1 = presente altrove, 0 = assente
+function valuta(tentativo,soluzione){
+  const n=soluzione.length, stato=Array(n).fill(0), rimasti={};
+  for(let i=0;i<n;i++){
+    if(tentativo[i]===soluzione[i]) stato[i]=2; else rimasti[soluzione[i]]=(rimasti[soluzione[i]]||0)+1;
+  }
+  for(let i=0;i<n;i++){
+    if(stato[i]===0&&rimasti[tentativo[i]]>0){ stato[i]=1; rimasti[tentativo[i]]--; }
+  }
+  return stato;
+}
+function giocaIndovina(g){
+  const t=testiGioco(g.tipo), n=g.segreto.length;
+  const righe=g.fatti.map(({parola,stato})=>{
+    const giuste=stato.filter(s=>s===2).length;
+    let celle;
+    if(g.diff===1) celle=[...parola].map((c,i)=>`<div class="tile ${["x","y","g"][stato[i]]}">${esc(c)}</div>`).join("");
+    else if(g.diff===2) celle=[...parola].map((c,i)=>`<div class="tile ${stato[i]===2?"g":""}">${esc(c)}</div>`).join("");
+    else celle=[...parola].map(c=>`<div class="tile">${esc(c)}</div>`).join("");
+    return `<div class="attempt"><div class="tiles">${celle}</div><div class="info">${giuste}/${n} ${t.unita} nella posizione giusta</div></div>`;
+  }).join("");
+  const rimasti=g.tentativi-g.fatti.length;
+  const legenda=g.diff===1?`<div class="legend"><span><i style="background:var(--green)"></i>posizione corretta</span><span><i style="background:var(--yellow)"></i>presente, posizione sbagliata</span><span><i style="background:var(--gray)"></i>assente</span></div>`
+    :g.diff===2?`<div class="legend"><span><i style="background:var(--green)"></i>posizione corretta</span></div>`:"";
+  let fondo;
+  if(g.finito){
+    const vinto=g.fatti.length&&g.fatti[g.fatti.length-1].parola===g.segreto;
+    fondo=`<div class="msg ${vinto?"ok":"err"}">${vinto?`🎉 Hai indovinato ${t.art} ${t.nome} in ${g.fatti.length} tentativ${g.fatti.length===1?"o":"i"}!`:`Hai finito i tentativi. ${t.art[0].toUpperCase()+t.art.slice(1)} ${t.nome} era: <b>${esc(g.segreto.toUpperCase())}</b>`}</div>
+      <div class="row"><button class="btn primary" onclick="vai('${g.tipo}${g.giocatori}')">Nuova partita</button><button class="btn" onclick="vai('menu')">Menu</button></div>`;
+  }else{
+    fondo=`<div class="row"><input type="text" id="tentativo" maxlength="${n}" autocomplete="off" placeholder="${"_".repeat(n)}" ${g.tipo==="pin"?'inputmode="numeric"':''}>
+      <button class="btn primary" id="prova">Prova</button><button class="btn" id="arrenditi">Arrenditi</button></div><div id="err"></div>`;
+  }
+  app.innerHTML=`<h2>${g.giocatori===2?`Indovina ${t.art} ${t.nome}`:`Single player ${t.nome}`}</h2>
+    <p class="sub">${t.art[0].toUpperCase()+t.art.slice(1)} ${t.nome} è da ${n} ${t.unita} · difficoltà ${DIFFICOLTA[g.diff][0].toLowerCase()} · tentativi rimasti: ${rimasti}</p>
+    <div class="panel">${legenda}${righe||'<p class="sub">Nessun tentativo ancora.</p>'}${fondo}</div>`;
+  if(g.finito) return;
+  const inp=$("#tentativo"); inp.focus();
+  const prova=()=>{
+    const v=inp.value.trim().toLowerCase();
+    if(v.length!==n){ $("#err").innerHTML=`<div class="msg err">Devi inserire esattamente ${n} ${t.unita}.</div>`; return; }
+    if(!t.regex.test(v)){ $("#err").innerHTML=`<div class="msg err">${t.soloMsg}</div>`; return; }
+    g.fatti.push({parola:v,stato:valuta(v,g.segreto)});
+    if(v===g.segreto||g.fatti.length>=g.tentativi) g.finito=true;
+    giocaIndovina(g);
+  };
+  $("#prova").onclick=prova;
+  inp.onkeydown=e=>{ if(e.key==="Enter") prova(); };
+  $("#arrenditi").onclick=()=>{ g.finito=true; giocaIndovina(g); };
+}
+
+/* ------------------------------------------------------------------- tris */
+const LINEE=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const punteggio={X:0,O:0,pari:0};
+let tris=null;
+function vincitoreTris(c){
+  for(const l of LINEE){ if(c[l[0]]&&c[l[0]]===c[l[1]]&&c[l[1]]===c[l[2]]) return {chi:c[l[0]],linea:l}; }
+  return c.every(Boolean)?{chi:"pari",linea:[]}:null;
+}
+// minimax: il computer (O) non perde mai, a difficolta' "facile" sbaglia a volte
+function minimax(c,turno){
+  const v=vincitoreTris(c);
+  if(v) return {p:v.chi==="O"?10:v.chi==="X"?-10:0};
+  let migliore=null;
+  for(let i=0;i<9;i++){
+    if(c[i]) continue;
+    c[i]=turno; const r=minimax(c,turno==="O"?"X":"O"); c[i]=null;
+    const p=r.p*0.9;
+    if(!migliore||(turno==="O"?p>migliore.p:p<migliore.p)) migliore={p,i};
+  }
+  return migliore;
+}
+function impostaTris(){
+  app.innerHTML=`<h2>Tris</h2><p class="sub">Il giocatore 1 è la X, il giocatore 2 la O. Chi comincia viene deciso a caso.</p>
+  <div class="panel"><div class="row">
+    <div><label>Avversario</label><select id="avv"><option value="2">Giocatore 2</option><option value="cpu">Computer</option></select></div>
+    <div id="livWrap" class="hidden"><label>Livello computer</label><select id="liv"><option value="facile">Facile</option><option value="imbattibile" selected>Imbattibile</option></select></div>
+  </div><button class="btn primary" id="via">Gioca</button></div>`;
+  $("#avv").onchange=()=>$("#livWrap").classList.toggle("hidden",$("#avv").value!=="cpu");
+  $("#via").onclick=()=>{ tris={celle:Array(9).fill(null),cpu:$("#avv").value==="cpu",livello:$("#liv").value,turno:casuale(2)?"X":"O",fine:null}; disegnaTris(); mossaCpu(); };
+}
+function nomeTris(s){ return s==="X"?"Giocatore 1 (X)":(tris.cpu?"Computer (O)":"Giocatore 2 (O)"); }
+function disegnaTris(){
+  const f=tris.fine;
+  const stato=f?(f.chi==="pari"?"Pareggio!":`Ha vinto ${nomeTris(f.chi)}! 🎉`):`Tocca a ${nomeTris(tris.turno)}`;
+  app.innerHTML=`<h2>Tris</h2>
+  <div class="score"><span>${nomeTris("X")}: <b>${punteggio.X}</b></span><span>${nomeTris("O")}: <b>${punteggio.O}</b></span><span>Pareggi: <b>${punteggio.pari}</b></span></div>
+  <div class="msg ${f?"ok":""}">${stato}</div>
+  <div class="tris">${tris.celle.map((c,i)=>`<button class="${c||""} ${f&&f.linea.includes(i)?"win":""}" data-i="${i}" aria-label="casella ${Math.floor(i/3)},${i%3}">${c||""}</button>`).join("")}</div>
+  <div class="row"><button class="btn primary" id="rivincita">${f?"Rivincita":"Ricomincia"}</button><button class="btn" onclick="impostaTris()">Cambia avversario</button></div>`;
+  app.querySelectorAll(".tris button").forEach(b=>b.onclick=()=>{
+    if(tris.fine||(tris.cpu&&tris.turno==="O")) return;
+    giocaTris(+b.dataset.i);
+  });
+  $("#rivincita").onclick=()=>{ tris.celle=Array(9).fill(null); tris.fine=null; tris.turno=casuale(2)?"X":"O"; disegnaTris(); mossaCpu(); };
+}
+function giocaTris(i){
+  if(tris.celle[i]||tris.fine) return; // casella occupata: non si puo' sovrascrivere
+  tris.celle[i]=tris.turno;
+  tris.fine=vincitoreTris(tris.celle);
+  if(tris.fine) punteggio[tris.fine.chi]++;
+  else tris.turno=tris.turno==="X"?"O":"X";
+  disegnaTris(); mossaCpu();
+}
+function mossaCpu(){
+  if(!tris.cpu||tris.fine||tris.turno!=="O") return;
+  setTimeout(()=>{
+    const libere=tris.celle.map((c,i)=>c?null:i).filter(i=>i!==null);
+    const i=(tris.livello==="facile"&&Math.random()<0.45)?libere[casuale(libere.length)]:minimax(tris.celle.slice(),"O").i;
+    giocaTris(i);
+  },400);
+}
+
+/* -------------------------------------------------------- battaglia navale */
+const N=10, FLOTTA=[2,3,4,5];
+let bn=null;
+function nuovoGiocatore(nome){ return {nome,navi:[],tab:Array.from({length:N},()=>Array(N).fill(0)),colpi:Array.from({length:N},()=>Array(N).fill(0))}; }
+// tab: 0 = mare, 1 = nave, 2 = nave colpita ; colpi (attacchi fatti): 0 = niente, 2 = colpito, 3 = acqua
+function celleNave(x,y,lung,orizz){ return Array.from({length:lung},(_,i)=>orizz?[y,x+i]:[y+i,x]); }
+function puoiPiazzare(g,celle){ return celle.every(([r,c])=>r>=0&&r<N&&c>=0&&c<N&&g.tab[r][c]===0); }
+function piazzaCasuale(g){
+  for(const lung of FLOTTA){
+    let celle;
+    do{ celle=celleNave(casuale(N),casuale(N),lung,casuale(2)===0); }while(!puoiPiazzare(g,celle));
+    celle.forEach(([r,c])=>g.tab[r][c]=1); g.navi.push({lung,celle});
+  }
+}
+function impostaBattaglia(){
+  app.innerHTML=`<h2>Battaglia navale</h2><p class="sub">Tabellone 10×10, ogni giocatore ha 4 navi: da 2, 3, 4 e 5 caselle.</p>
+  <div class="panel"><label>Avversario</label><select id="avv"><option value="2">Giocatore 2 (stesso computer)</option><option value="cpu">Computer</option></select>
+  <div class="row"><button class="btn primary" id="via">Inizia</button></div></div>`;
+  $("#via").onclick=()=>{
+    const cpu=$("#avv").value==="cpu";
+    bn={cpu,g:[nuovoGiocatore("Giocatore 1"),nuovoGiocatore(cpu?"Computer":"Giocatore 2")],turno:0,fine:false,orizz:true,scelta:0,ultimo:"",bersagli:[]};
+    if(cpu) piazzaCasuale(bn.g[1]);
+    posizionamento(0);
+  };
+}
+function htmlGriglia(id,celle,cls){
+  let h=`<div class="grid ${cls||""}" id="${id}"><div></div>`;
+  for(let c=0;c<N;c++) h+=`<div class="lab">${c}</div>`;
+  for(let r=0;r<N;r++){ h+=`<div class="lab">${r}</div>`; for(let c=0;c<N;c++) h+=celle(r,c); }
+  return h+"</div>";
+}
+function posizionamento(idx){
+  const g=bn.g[idx];
+  const mancanti=FLOTTA.filter(l=>!g.navi.some(n=>n.lung===l));
+  if(!mancanti.includes(bn.scelta)) bn.scelta=mancanti[0]||0;
+  app.innerHTML=`<h2>${esc(g.nome)}: posiziona le navi</h2>
+  <p class="sub">Scegli una nave, poi clicca sulla casella di partenza. Premi <b>R</b> o il pulsante per ruotarla. Clicca una nave già piazzata per toglierla.</p>
+  <div class="panel">
+    <div class="fleet">${FLOTTA.map(l=>`<button class="btn ${bn.scelta===l?"sel":""}" data-l="${l}" ${mancanti.includes(l)?"":"disabled"}>Nave da ${l}</button>`).join("")}</div>
+    <div class="row"><button class="btn" id="ruota">↻ ${bn.orizz?"Orizzontale":"Verticale"}</button><button class="btn" id="caso">🎲 A caso</button><button class="btn" id="svuota">Svuota</button></div>
+    ${htmlGriglia("piazza",(r,c)=>`<button class="c ${g.tab[r][c]?"ship":""}" data-r="${r}" data-c="${c}" aria-label="riga ${r} colonna ${c}"></button>`)}
+    <div class="row"><button class="btn primary" id="fatto" ${mancanti.length?"disabled":""}>Conferma</button></div>
+  </div>`;
+  app.querySelectorAll(".fleet .btn").forEach(b=>b.onclick=()=>{ bn.scelta=+b.dataset.l; posizionamento(idx); });
+  $("#ruota").onclick=()=>{ bn.orizz=!bn.orizz; posizionamento(idx); };
+  $("#caso").onclick=()=>{ bn.g[idx]=nuovoGiocatore(g.nome); piazzaCasuale(bn.g[idx]); posizionamento(idx); };
+  $("#svuota").onclick=()=>{ bn.g[idx]=nuovoGiocatore(g.nome); posizionamento(idx); };
+  const celleDom=[...app.querySelectorAll("#piazza .c")];
+  const anteprima=(r,c)=>{
+    celleDom.forEach(e=>e.classList.remove("prev","bad"));
+    if(!bn.scelta||r===null) return;
+    const celle=celleNave(c,r,bn.scelta,bn.orizz), ok=puoiPiazzare(g,celle);
+    celle.forEach(([rr,cc])=>{ if(rr<N&&cc<N) celleDom[rr*N+cc].classList.add(ok?"prev":"bad"); });
+  };
+    celleDom.forEach(e=>{
+    const r=+e.dataset.r,c=+e.dataset.c;
+    e.onmouseenter=()=>anteprima(r,c);
+    e.onclick=()=>{
+      const nave=g.navi.find(n=>n.celle.some(([rr,cc])=>rr===r&&cc===c));
+      if(nave){ nave.celle.forEach(([rr,cc])=>g.tab[rr][cc]=0); g.navi.splice(g.navi.indexOf(nave),1); bn.scelta=nave.lung; posizionamento(idx); return; }
+      if(!bn.scelta) return;
+      const celle=celleNave(c,r,bn.scelta,bn.orizz);
+      if(!puoiPiazzare(g,celle)) return;
+      celle.forEach(([rr,cc])=>g.tab[rr][cc]=1); g.navi.push({lung:bn.scelta,celle});
+      posizionamento(idx);
+    };
+  });
+  $("#piazza").onmouseleave=()=>anteprima(null,null);
+  document.onkeydown=e=>{ if((e.key==="r"||e.key==="R")&&$("#piazza")){ bn.orizz=!bn.orizz; posizionamento(idx); } };
+  $("#fatto").onclick=()=>{
+    document.onkeydown=null;
+    if(idx===0&&!bn.cpu) overlay("Passa al Giocatore 2","Il Giocatore 1 non deve guardare lo schermo.","Sono il Giocatore 2",()=>posizionamento(1));
+    else iniziaTurno();
+  };
+}
+function iniziaTurno(){
+  if(bn.cpu||bn.fine) return turnoBattaglia();
+  overlay(`Turno di ${bn.g[bn.turno].nome}`,`${bn.g[1-bn.turno].nome} non deve guardare lo schermo.`,"Sono pronto",turnoBattaglia);
+}
+function rimaste(g){ return g.tab.flat().filter(v=>v===1).length; }
+function affondata(g,nave){ return nave.celle.every(([r,c])=>g.tab[r][c]===2); }
+function turnoBattaglia(){
+  const io=bn.g[bn.turno], lui=bn.g[1-bn.turno];
+  // con il computer si vede sempre il punto di vista del giocatore 1
+  const vista=bn.cpu?bn.g[0]:io, avv=bn.cpu?bn.g[1]:lui;
+  const mio=bn.cpu?(bn.turno===0):!bn.attesa;
+  const stato=bn.fine?`<div class="msg ok">🏆 Ha vinto ${esc(bn.fine)}!</div>`:`<div class="msg">${bn.attesa?"Turno finito.":mio?`Tocca a <b>${esc(io.nome)}</b>: clicca una casella del tabellone avversario per sparare.`:"Il computer sta pensando..."}</div>`;
+  const naviAvv=avv.navi.map(n=>`<span>${affondata(avv,n)?"💥":"🚢"} da ${n.lung}</span>`).join(" ");
+  app.innerHTML=`<h2>Battaglia navale</h2>${stato}
+  ${bn.ultimo?`<p class="sub">${esc(bn.ultimo)}</p>`:""}
+  <div class="boards">
+    <div class="board-wrap"><h3>Tabellone attacchi di ${esc(vista.nome)}</h3>
+      ${htmlGriglia("attacco",(r,c)=>{const v=vista.colpi[r][c]; const mostra=bn.fine&&avv.tab[r][c]===1;
+        return `<button class="c ${v===2?"hit":v===3?"miss":mostra?"ship":""}" data-r="${r}" data-c="${c}" aria-label="riga ${r} colonna ${c}">${v===2?"✕":v===3?"•":""}</button>`;},(bn.fine||!mio)?"off":"")}
+      <p class="sub" style="margin-top:8px">Navi avversarie: ${naviAvv}</p></div>
+    <div class="board-wrap"><h3>Le tue navi (${rimaste(vista)} caselle intatte)</h3>
+      ${htmlGriglia("mie",(r,c)=>{const v=vista.tab[r][c], acqua=avv.colpi[r][c]===3;
+        return `<div class="c ${v===1?"ship":v===2?"hit":acqua?"miss":""}">${v===2?"✕":acqua?"•":""}</div>`;},"small off")}</div>
+  </div>
+  <div class="row">${bn.fine?`<button class="btn primary" onclick="impostaBattaglia()">Nuova partita</button>`:""}<button class="btn" onclick="vai('menu')">Menu</button></div>`;
+  if(bn.fine) return;
+  if(bn.attesa) return;
+  if(!mio){ setTimeout(mossaComputer,600); return; }
+  app.querySelectorAll("#attacco .c").forEach(e=>e.onclick=()=>{
+    const r=+e.dataset.r,c=+e.dataset.c;
+    if(io.colpi[r][c]) return; // casella gia' attaccata
+    spara(r,c);
+  });
+}
+function spara(r,c){
+  const io=bn.g[bn.turno], lui=bn.g[1-bn.turno];
+  const coord=`(y ${r}, x ${c})`;
+  if(lui.tab[r][c]===1){
+    lui.tab[r][c]=2; io.colpi[r][c]=2;
+    const nave=lui.navi.find(n=>n.celle.some(([rr,cc])=>rr===r&&cc===c));
+    bn.ultimo=`${io.nome} ${coord}: colpito${affondata(lui,nave)?` e affondato la nave da ${nave.lung}!`:"!"}`;
+    if(bn.cpu&&bn.turno===1){ if(affondata(lui,nave)) bn.bersagli=[]; else bn.bersagli.push([r,c]); }
+  }else{
+    io.colpi[r][c]=3; bn.ultimo=`${io.nome} ${coord}: acqua.`;
+  }
+  if(rimaste(lui)===0){ bn.fine=io.nome; return turnoBattaglia(); }
+  if(bn.cpu){ bn.turno=1-bn.turno; return turnoBattaglia(); }
+  // due giocatori: si mostra il risultato del colpo, poi si passa il computer all'altro
+  bn.attesa=true; turnoBattaglia();
+  setTimeout(()=>overlay(bn.ultimo,`Ora tocca a ${lui.nome}. ${io.nome} non deve guardare.`,"Sono pronto",()=>{ bn.attesa=false; bn.turno=1-bn.turno; turnoBattaglia(); }),900);
+}
+// il computer spara a caso finche' non colpisce, poi cerca intorno al colpo
+function mossaComputer(){
+  const io=bn.g[1], libera=(r,c)=>r>=0&&r<N&&c>=0&&c<N&&!io.colpi[r][c];
+  let candidati=[];
+  const colpiti=bn.bersagli.filter(([r,c])=>bn.g[0].tab[r][c]===2);
+  if(colpiti.length>=2){
+    const orizz=colpiti[0][0]===colpiti[1][0];
+    const ord=colpiti.slice().sort((a,b)=>orizz?a[1]-b[1]:a[0]-b[0]);
+    const [p,u]=[ord[0],ord[ord.length-1]];
+    candidati=orizz?[[p[0],p[1]-1],[u[0],u[1]+1]]:[[p[0]-1,p[1]],[u[0]+1,u[1]]];
+    candidati=candidati.filter(([r,c])=>libera(r,c));
+  }
+  if(!candidati.length) for(const [r,c] of colpiti) for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) if(libera(r+dr,c+dc)) candidati.push([r+dr,c+dc]);
+  if(!candidati.length){ for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(libera(r,c)&&(r+c)%2===0) candidati.push([r,c]); }
+  if(!candidati.length){ for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(libera(r,c)) candidati.push([r,c]); }
+  const [r,c]=candidati[casuale(candidati.length)];
+  spara(r,c);
+}
+
+/* --------------------------------------------------------- aggiungi parola */
+function mostraAggiungi(messaggio){
+  const agg=paroleAggiunte();
+  app.innerHTML=`<h2>Aggiungi una parola</h2><p class="sub">La parola sarà usata nella modalità single player. Da 4 a 15 lettere, senza accenti.</p>
+  <div class="panel">
+    <div class="row"><input type="text" id="nuova" maxlength="15" autocomplete="off" placeholder="nuova parola"><button class="btn primary" id="aggiungi">Aggiungi</button></div>
+    <div id="esito">${messaggio||""}</div>
+    <p class="sub" style="margin-top:14px">Le parole aggiunte qui vengono salvate in questo browser. Per aggiungerle anche ai file <code>parola_N.txt</code> usa l'opzione 7 del programma da console.</p>
+  </div>
+  <div class="panel"><h3 style="margin-top:0">Parole aggiunte (${agg.length})</h3>
+    ${agg.length?`<div class="words">${agg.map((p,i)=>`<div>${esc(p)} <button class="btn" style="padding:0 6px" data-i="${i}" title="rimuovi">✕</button></div>`).join("")}</div>`:'<p class="sub">Nessuna parola aggiunta.</p>'}
+  </div>`;
+  const inp=$("#nuova"); inp.focus();
+  const aggiungi=()=>{
+    const p=inp.value.trim().toLowerCase();
+    const err=m=>mostraAggiungi(`<div class="msg err">${esc(m)}</div>`);
+    if(!/^[a-z]+$/.test(p)) return err("La parola può contenere solo lettere (senza accenti).");
+    if(p.length<4||p.length>15) return err("La parola deve essere da 4 a 15 lettere.");
+    if(tutteLeParole(p.length).includes(p)) return err("Parola già esistente nel sistema.");
+    const l=paroleAggiunte(); l.push(p);
+    if(!salvaParoleAggiunte(l)) return err("Il browser non permette di salvare le parole.");
+    mostraAggiungi(`<div class="msg ok">Parola "${esc(p)}" aggiunta (${p.length} lettere).</div>`);
+  };
+  $("#aggiungi").onclick=aggiungi;
+  inp.onkeydown=e=>{ if(e.key==="Enter") aggiungi(); };
+  app.querySelectorAll(".words .btn").forEach(b=>b.onclick=()=>{ const l=paroleAggiunte(); l.splice(+b.dataset.i,1); salvaParoleAggiunte(l); mostraAggiungi(); });
+}
+
+mostraMenu();
+</script>
+</body>
+</html>
