@@ -9,18 +9,21 @@
   --bg:#f4f1ea; --panel:#ffffff; --ink:#1d2330; --muted:#6b7280; --line:#d9d4c7;
   --accent:#2f5bd3; --accent-ink:#ffffff; --green:#3a9a5b; --yellow:#d4a72c; --gray:#9aa0a8;
   --sea:#d7e6f5; --ship:#3c4a63; --hit:#d64545; --miss:#8aa4c0; --shadow:0 2px 10px rgba(0,0,0,.08);
+  --n1:#2f5bd3;--n2:#2e8b4e;--n3:#d64545;--n4:#6a3fb5;--n5:#a0522d;--n6:#138a8a;--n7:#333;--n8:#777;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#14171e; --panel:#1e232d; --ink:#e7e9ee; --muted:#9aa3b2; --line:#323946;
     --accent:#6b8cff; --accent-ink:#0f1320; --green:#3fa866; --yellow:#c99a1e; --gray:#4a515e;
     --sea:#1c3048; --ship:#a9b6cc; --hit:#e25b5b; --miss:#3d5874; --shadow:0 2px 10px rgba(0,0,0,.4);
+  --n1:#8fb0ff;--n2:#6fd08f;--n3:#ff8a8a;--n4:#c6a6ff;--n5:#f0b27a;--n6:#6fd6d6;--n7:#e7e9ee;--n8:#aab;
   }
 }
 :root[data-theme="dark"]{
   --bg:#14171e; --panel:#1e232d; --ink:#e7e9ee; --muted:#9aa3b2; --line:#323946;
   --accent:#6b8cff; --accent-ink:#0f1320; --green:#3fa866; --yellow:#c99a1e; --gray:#4a515e;
   --sea:#1c3048; --ship:#a9b6cc; --hit:#e25b5b; --miss:#3d5874; --shadow:0 2px 10px rgba(0,0,0,.4);
+  --n1:#8fb0ff;--n2:#6fd08f;--n3:#ff8a8a;--n4:#c6a6ff;--n5:#f0b27a;--n6:#6fd6d6;--n7:#e7e9ee;--n8:#aab;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -83,6 +86,22 @@ input[type=text],input[type=password]{width:min(320px,100%);letter-spacing:2px}
 .fleet .btn.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .overlay{position:fixed;inset:0;background:rgba(10,12,18,.92);display:grid;place-items:center;z-index:10;padding:16px}
 .overlay .panel{max-width:420px;text-align:center}
+/* snake */
+.snake-wrap{position:relative;margin:12px 0}
+#snake{display:block;border-radius:8px;border:1px solid var(--line);touch-action:none}
+.snake-msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:color-mix(in srgb,var(--panel) 70%,transparent);border-radius:8px;font-size:18px;padding:10px}
+.pad{display:grid;grid-template-columns:repeat(3,56px);gap:6px;justify-content:start}
+.pad .btn{padding:10px 0}
+/* campo minato */
+.btn.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cm-wrap{overflow-x:auto;max-width:100%;padding-bottom:4px}
+.cm{display:grid;gap:2px;width:max-content}
+.cm-c{border:0;border-radius:4px;background:var(--ship);color:#fff;font-weight:800;font-size:15px;padding:0;cursor:pointer;display:grid;place-items:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.cm-c:hover{filter:brightness(1.15)}
+.cm-c.aperta{background:var(--sea);cursor:default}
+.cm-c.mina{background:var(--miss)} .cm-c.boom{background:var(--hit)} .cm-c.sbagliata{background:var(--yellow)}
+.cm-c.n1{color:var(--n1)}.cm-c.n2{color:var(--n2)}.cm-c.n3{color:var(--n3)}.cm-c.n4{color:var(--n4)}.cm-c.n5{color:var(--n5)}.cm-c.n6{color:var(--n6)}.cm-c.n7{color:var(--n7)}.cm-c.n8{color:var(--n8)}
+.cm.off .cm-c{cursor:default}
 .words{columns:3 140px;font-size:14px;color:var(--muted)}
 </style>
 </head>
@@ -142,14 +161,20 @@ const VOCI=[
   ["parola1","📖","Single player parola","La parola viene scelta dal dizionario"],
   ["battaglia","🚢","Battaglia navale","2 giocatori sullo stesso computer o contro il computer"],
   ["tris","❌","Tris","2 giocatori o contro il computer"],
+  ["snake","🐍","Snake","Mangia le mele e diventa lunghissimo"],
+  ["campo","💣","Campo minato","Scopri tutte le caselle senza far esplodere le mine"],
   ["aggiungi","➕","Aggiungi una parola","Amplia il dizionario della modalità single player"],
 ];
+let ferma=null; // funzione per fermare il gioco in corso (timer, tasti)
 function vai(dove){
+  if(ferma){ ferma(); ferma=null; }
+  document.onkeydown=null;
+  if(cm) clearInterval(cm.timer);
   window.scrollTo(0,0);
   $("#overlay").classList.add("hidden");
   ({menu:mostraMenu,pin2:()=>impostaIndovina("pin",2),parola2:()=>impostaIndovina("parola",2),
     pin1:()=>impostaIndovina("pin",1),parola1:()=>impostaIndovina("parola",1),
-    battaglia:impostaBattaglia,tris:impostaTris,aggiungi:mostraAggiungi})[dove]();
+    battaglia:impostaBattaglia,tris:impostaTris,snake:impostaSnake,campo:impostaCampoMinato,aggiungi:mostraAggiungi})[dove]();
 }
 function mostraMenu(){
   app.innerHTML=`<h2>Cosa vuoi fare?</h2><p class="sub">Scegli un gioco</p><div class="menu">${
@@ -508,6 +533,208 @@ function mostraAggiungi(messaggio){
   $("#aggiungi").onclick=aggiungi;
   inp.onkeydown=e=>{ if(e.key==="Enter") aggiungi(); };
   app.querySelectorAll(".words .btn").forEach(b=>b.onclick=()=>{ const l=paroleAggiunte(); l.splice(+b.dataset.i,1); salvaParoleAggiunte(l); mostraAggiungi(); });
+}
+
+/* ------------------------------------------------------------------ snake */
+const SN_L=30, SN_A=18;
+function impostaSnake(){
+  let record=0; try{ record=+localStorage.getItem("bigbattle-snake-record")||0; }catch(e){}
+  app.innerHTML=`<h2>Snake</h2><p class="sub">Mangia le mele senza toccare il bordo o la tua coda. Frecce o W A S D per muoverti, P o spazio per la pausa. Da telefono: scorri sul campo o usa i pulsanti.</p>
+  <div class="panel">
+    <div class="row"><div><label>Velocità</label><select id="vel"><option value="1">Lento</option><option value="2" selected>Normale</option><option value="3">Veloce</option></select></div>
+      <button class="btn primary" id="via" style="align-self:flex-end">Gioca</button></div>
+    <div class="score"><span>Punti: <b id="snPunti">0</b></span><span>Lunghezza: <b id="snLung">3</b></span><span>Record: <b id="snRecord">${record}</b></span></div>
+    <div class="snake-wrap"><canvas id="snake"></canvas><div class="snake-msg" id="snMsg">Premi <b>Gioca</b> per iniziare</div></div>
+    <div class="pad"><span></span><button class="btn" data-d="w" aria-label="su">▲</button><span></span>
+      <button class="btn" data-d="a" aria-label="sinistra">◀</button><button class="btn" data-d="p" aria-label="pausa">⏸</button><button class="btn" data-d="d" aria-label="destra">▶</button>
+      <span></span><button class="btn" data-d="s" aria-label="giu">▼</button><span></span></div>
+  </div>`;
+  const cv=$("#snake"), ctx=cv.getContext("2d");
+  let s=null, timer=null;
+  const colore=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const lato=()=>Math.floor(Math.min(600,cv.closest(".panel").clientWidth-38)/SN_L);
+  function ridimensiona(){
+    const l=Math.max(8,lato()); cv.width=l*SN_L*devicePixelRatio; cv.height=l*SN_A*devicePixelRatio;
+    cv.parentElement.style.width=cv.style.width=(l*SN_L)+"px"; cv.style.height=(l*SN_A)+"px"; disegna();
+  }
+  function disegna(){
+    const l=cv.width/SN_L;
+    ctx.fillStyle=colore("--sea"); ctx.fillRect(0,0,cv.width,cv.height);
+    if(!s) return;
+    ctx.fillStyle=colore("--hit");
+    ctx.beginPath(); ctx.arc((s.mela.x+.5)*l,(s.mela.y+.5)*l,l*.4,0,Math.PI*2); ctx.fill();
+    s.corpo.forEach((p,i)=>{
+      ctx.fillStyle=i===0?colore("--accent"):colore("--green");
+      ctx.fillRect(p.x*l+1,p.y*l+1,l-2,l-2);
+    });
+  }
+  function messaggio(html){ $("#snMsg").innerHTML=html; $("#snMsg").classList.toggle("hidden",!html); }
+  function aggiornaPunti(){ $("#snPunti").textContent=s.punti; $("#snLung").textContent=s.corpo.length; $("#snRecord").textContent=record; }
+  function nuovaMela(){
+    if(s.corpo.length>=SN_L*SN_A) return false;
+    do{ s.mela={x:casuale(SN_L),y:casuale(SN_A)}; }while(s.corpo.some(p=>p.x===s.mela.x&&p.y===s.mela.y));
+    return true;
+  }
+  function inizia(){
+    clearTimeout(timer);
+    const liv=+$("#vel").value;
+    s={corpo:[0,1,2].map(i=>({x:SN_L/2-i,y:SN_A/2})),dir:{x:1,y:0},coda:[],punti:0,liv,attesa:[160,110,70][liv-1],pausa:false,fine:false};
+    nuovaMela(); aggiornaPunti(); messaggio(""); disegna();
+    timer=setTimeout(passo,s.attesa);
+  }
+  function passo(){
+    if(!s||s.fine||s.pausa) return;
+    if(s.coda.length) s.dir=s.coda.shift();
+    const t={x:s.corpo[0].x+s.dir.x,y:s.corpo[0].y+s.dir.y};
+    const mangia=t.x===s.mela.x&&t.y===s.mela.y;
+    // se non mangia la coda si sposta, quindi la sua casella si libera
+    const corpo=mangia?s.corpo:s.corpo.slice(0,-1);
+    if(t.x<0||t.x>=SN_L||t.y<0||t.y>=SN_A||corpo.some(p=>p.x===t.x&&p.y===t.y)) return fine(false);
+    if(!mangia) s.corpo.pop();
+    s.corpo.unshift(t);
+    if(mangia){ s.punti+=10*s.liv; if(!nuovaMela()) return fine(true); }
+    aggiornaPunti(); disegna();
+    timer=setTimeout(passo,s.attesa);
+  }
+  function fine(vinto){
+    s.fine=true; disegna();
+    let m=vinto?"🏆 Hai riempito tutto il campo!":`Game over! Hai fatto <b>${s.punti}</b> punti`;
+    if(s.punti>record){ record=s.punti; try{localStorage.setItem("bigbattle-snake-record",record);}catch(e){} m+="<br>🎉 Nuovo record!"; }
+    aggiornaPunti(); messaggio(m+"<br><small>Premi Gioca per riprovare</small>");
+  }
+  function pausa(){
+    if(!s||s.fine) return;
+    s.pausa=!s.pausa; messaggio(s.pausa?"Pausa":"");
+    if(!s.pausa) timer=setTimeout(passo,s.attesa);
+  }
+  const DIREZIONI={w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0}};
+  function cambia(k){
+    if(k==="p") return pausa();
+    const d=DIREZIONI[k]; if(!d||!s||s.fine||s.pausa) return;
+    // si confronta con l'ultima direzione in coda: non si puo' tornare indietro sul corpo
+    const ult=s.coda.length?s.coda[s.coda.length-1]:s.dir;
+    if((d.x===-ult.x&&d.y===-ult.y)||(d.x===ult.x&&d.y===ult.y)||s.coda.length>=2) return;
+    s.coda.push(d);
+  }
+  const TASTI={ArrowUp:"w",ArrowDown:"s",ArrowLeft:"a",ArrowRight:"d",w:"w",s:"s",a:"a",d:"d",W:"w",S:"s",A:"a",D:"d",p:"p",P:"p"," ":"p"};
+  document.onkeydown=e=>{ const k=TASTI[e.key]; if(!k||e.target.tagName==="SELECT") return; e.preventDefault(); cambia(k); };
+  app.querySelectorAll(".pad .btn").forEach(b=>b.onclick=()=>cambia(b.dataset.d));
+  let tocco=null;
+  cv.addEventListener("touchstart",e=>{ tocco=[e.touches[0].clientX,e.touches[0].clientY]; },{passive:true});
+  cv.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
+  cv.addEventListener("touchend",e=>{
+    if(!tocco) return; const dx=e.changedTouches[0].clientX-tocco[0], dy=e.changedTouches[0].clientY-tocco[1]; tocco=null;
+    if(Math.max(Math.abs(dx),Math.abs(dy))<20) return;
+    cambia(Math.abs(dx)>Math.abs(dy)?(dx>0?"d":"a"):(dy>0?"s":"w"));
+  });
+  $("#via").onclick=()=>{ $("#via").blur(); inizia(); };
+  window.onresize=ridimensiona; ridimensiona();
+  ferma=()=>{ clearTimeout(timer); s=null; document.onkeydown=null; window.onresize=null; };
+}
+
+/* ----------------------------------------------------------- campo minato */
+const LIVELLI_CM={facile:[9,9,10],media:[12,16,30],difficile:[16,20,60]};
+let cm=null;
+function impostaCampoMinato(){
+  app.innerHTML=`<h2>Campo minato</h2><p class="sub">Scopri tutte le caselle senza mine. Ogni numero dice quante mine ci sono nelle 8 caselle intorno. La prima casella non è mai una mina.</p>
+  <div class="panel"><div class="row">
+    <div><label>Difficoltà</label><select id="liv"><option value="facile">Facile (9 × 9, 10 mine)</option><option value="media">Media (12 × 16, 30 mine)</option><option value="difficile">Difficile (16 × 20, 60 mine)</option><option value="pers">Personalizzata</option></select></div>
+    <div id="persWrap" class="hidden row" style="margin:0">
+      <div><label>Righe</label><input type="number" id="pr" min="5" max="30" value="10" style="width:75px"></div>
+      <div><label>Colonne</label><input type="number" id="pc" min="5" max="30" value="10" style="width:75px"></div>
+      <div><label>Mine</label><input type="number" id="pm" min="1" value="15" style="width:75px"></div></div>
+  </div><div id="err"></div><button class="btn primary" id="via">Gioca</button></div>`;
+  $("#liv").onchange=()=>$("#persWrap").classList.toggle("hidden",$("#liv").value!=="pers");
+  $("#via").onclick=()=>{
+    let r,c,m;
+    if($("#liv").value==="pers"){
+      r=Math.floor(+$("#pr").value); c=Math.floor(+$("#pc").value); m=Math.floor(+$("#pm").value);
+      if(!(r>=5&&r<=30&&c>=5&&c<=30)) return $("#err").innerHTML='<div class="msg err">Righe e colonne devono essere da 5 a 30.</div>';
+      if(!(m>=1&&m<=r*c-1)) return $("#err").innerHTML=`<div class="msg err">Le mine devono essere da 1 a ${r*c-1}.</div>`;
+    }else [r,c,m]=LIVELLI_CM[$("#liv").value];
+    nuovaPartitaCM(r,c,m);
+  };
+}
+function nuovaPartitaCM(r,c,m){
+  if(cm) clearInterval(cm.timer);
+  cm={r,c,m,celle:Array.from({length:r*c},()=>({mina:false,vista:false,flag:false,n:0})),piazzate:false,fine:null,inizio:0,timer:null,modo:"scopri"};
+  disegnaCM();
+}
+function vicineCM(i){
+  const y=Math.floor(i/cm.c), x=i%cm.c, out=[];
+  for(let a=-1;a<=1;a++) for(let b=-1;b<=1;b++){ if((a||b)&&y+a>=0&&y+a<cm.r&&x+b>=0&&x+b<cm.c) out.push((y+a)*cm.c+x+b); }
+  return out;
+}
+// le mine vengono messe dopo il primo clic, lontano dalla casella scelta
+function piazzaMineCM(primo){
+  const vietate=new Set([primo]);
+  if(cm.r*cm.c-cm.m>=9) vicineCM(primo).forEach(i=>vietate.add(i));
+  const libere=cm.celle.map((_,i)=>i).filter(i=>!vietate.has(i));
+  for(let k=0;k<cm.m;k++){ const j=k+casuale(libere.length-k); [libere[k],libere[j]]=[libere[j],libere[k]]; cm.celle[libere[k]].mina=true; }
+  cm.celle.forEach((cl,i)=>cl.n=vicineCM(i).filter(j=>cm.celle[j].mina).length);
+  cm.piazzate=true; cm.inizio=Date.now();
+  cm.timer=setInterval(()=>{ const t=$("#cmTempo"); if(t) t.textContent=Math.floor((Date.now()-cm.inizio)/1000); },1000);
+}
+function scopriCM(i){
+  const pila=[i];
+  while(pila.length){
+    const k=pila.pop(), cl=cm.celle[k];
+    if(cl.vista||cl.flag) continue;
+    cl.vista=true;
+    if(cl.mina){ cm.fine={vinto:false,boom:k}; continue; }
+    if(cl.n===0) vicineCM(k).forEach(j=>pila.push(j));
+  }
+  if(!cm.fine&&cm.celle.every(cl=>cl.mina||cl.vista)) cm.fine={vinto:true};
+  if(cm.fine){
+    clearInterval(cm.timer);
+    if(cm.fine.vinto) cm.celle.forEach(cl=>{ if(cl.mina) cl.flag=true; });
+  }
+}
+function azioneCM(i,bandiera){
+  if(cm.fine) return;
+  const cl=cm.celle[i];
+  if(bandiera){ if(!cl.vista) cl.flag=!cl.flag; return disegnaCM(); }
+  if(cl.flag) return;
+  if(cl.vista){
+    // clic su un numero con tutte le bandiere intorno: scopre le altre caselle vicine
+    const v=vicineCM(i);
+    if(cl.n>0&&v.filter(j=>cm.celle[j].flag).length===cl.n) v.forEach(j=>{ if(!cm.fine) scopriCM(j); });
+    return disegnaCM();
+  }
+  if(!cm.piazzate) piazzaMineCM(i);
+  scopriCM(i); disegnaCM();
+}
+function disegnaCM(){
+  const f=cm.fine, bandiere=cm.celle.filter(cl=>cl.flag).length;
+  const sec=cm.piazzate?Math.floor(((f?cm.fineT||(cm.fineT=Date.now()):Date.now())-cm.inizio)/1000):0;
+  const lato=Math.max(26,Math.min(36,Math.floor((Math.min(innerWidth,900)-70)/cm.c)));
+  const celle=cm.celle.map((cl,i)=>{
+    let cls="cm-c", txt="";
+    const mostra=f&&!f.vinto;
+    if(cl.vista&&!cl.mina){ cls+=" aperta"; if(cl.n){ txt=cl.n; cls+=" n"+cl.n; } }
+    else if(cl.flag&&mostra&&!cl.mina){ cls+=" sbagliata"; txt="✕"; }
+    else if(cl.flag){ txt="🚩"; }
+    else if(cl.mina&&(cl.vista||mostra)){ cls+=" mina"+(f&&f.boom===i?" boom":""); txt="💣"; }
+    return `<button class="${cls}" data-i="${i}" aria-label="riga ${Math.floor(i/cm.c)} colonna ${i%cm.c}">${txt}</button>`;
+  }).join("");
+  app.innerHTML=`<h2>Campo minato</h2>
+  <div class="score"><span>💣 Mine: <b>${cm.m-bandiere}</b></span><span>⏱ Tempo: <b id="cmTempo">${sec}</b> s</span></div>
+  ${f?`<div class="msg ${f.vinto?"ok":"err"}">${f.vinto?`🏆 Hai vinto in ${sec} secondi!`:"💥 BOOM! Hai preso una mina."}</div>`:""}
+  <div class="row"><button class="btn ${cm.modo==="scopri"?"sel":""}" id="mScopri">⛏ Scopri</button><button class="btn ${cm.modo==="bandiera"?"sel":""}" id="mFlag">🚩 Bandiera</button>
+    <span class="sub" style="font-size:14px">Tasto destro o tieni premuto per mettere una bandiera</span></div>
+  <div class="cm-wrap"><div class="cm ${f?"off":""}" style="grid-template-columns:repeat(${cm.c},${lato}px);grid-auto-rows:${lato}px">${celle}</div></div>
+  <div class="row"><button class="btn primary" id="ancora">${f?"Nuova partita":"Ricomincia"}</button><button class="btn" onclick="impostaCampoMinato()">Cambia difficoltà</button></div>`;
+  $("#mScopri").onclick=()=>{ cm.modo="scopri"; disegnaCM(); };
+  $("#mFlag").onclick=()=>{ cm.modo="bandiera"; disegnaCM(); };
+  $("#ancora").onclick=()=>nuovaPartitaCM(cm.r,cm.c,cm.m);
+  app.querySelectorAll(".cm-c").forEach(b=>{
+    const i=+b.dataset.i; let premuto=null, lungo=false;
+    b.onclick=()=>{ if(lungo){ lungo=false; return; } azioneCM(i,cm.modo==="bandiera"); };
+    b.oncontextmenu=e=>{ e.preventDefault(); azioneCM(i,true); };
+    b.addEventListener("touchstart",()=>{ lungo=false; premuto=setTimeout(()=>{ lungo=true; azioneCM(i,true); },450); },{passive:true});
+    b.addEventListener("touchend",()=>clearTimeout(premuto));
+    b.addEventListener("touchmove",()=>clearTimeout(premuto),{passive:true});
+  });
 }
 
 mostraMenu();
